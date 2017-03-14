@@ -8,19 +8,18 @@ data LispVal = Symbol String
              | String String
              | Bool Bool
              | Nil
-             deriving (Show)
+
+instance Show LispVal where
+  show val =
+    case val of
+      Symbol s   -> s
+      List list  -> "(" ++ showListContents list  ++ ")"
+      Number n   -> show n
+      String s   -> "\"" ++ s ++ "\""
+      Bool True  -> "true"
+      Bool False -> "false"
+      Nil        -> "nil"
 
 
 showListContents contents =
-  unwords $ map showVal contents
-
-showVal (Symbol s)   = s
-showVal (List list)  = "(" ++ showListContents list  ++ ")"
-showVal (Number n)   = show n
-showVal (String s)   = "\"" ++ s ++ "\""
-showVal (Bool True)  = "true"
-showVal (Bool False) = "false"
-showVal Nil          = "nil"
-
--- instance Show LispVal where
---   show = showVal
+  unwords $ map show contents

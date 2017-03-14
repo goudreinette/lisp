@@ -12,12 +12,14 @@ main = do
   globalEnv <- newEnv
   repl globalEnv
 
-repl globalEnv = do
+repl env = do
   putStr "lisp=> "
   line <- getLine
-  case parseLisp line >>= eval globalEnv of
-    Left err ->
-      print err
-    Right result ->
-      print result
-  repl globalEnv
+  result <- evalString env line
+  case result of
+    Left x  -> print x
+    Right y -> print y
+  repl env
+
+evalString env expr =
+  runIOThrows (parseLisp expr >>= eval env)

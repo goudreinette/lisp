@@ -1,5 +1,6 @@
 module Parse where
 
+import           Control.Monad.Except
 import           Error
 import           Flow
 import           System.Environment
@@ -50,10 +51,10 @@ exprSurroundedByWhitespace = do
   skipMany space
   return e
 
-parseLisp :: String -> Either LispError LispVal
+parseLisp :: String -> IOThrowsError LispVal
 parseLisp code =
   case (parse exprSurroundedByWhitespace "lisp" code) of
     Left e ->
-      Left $ SyntaxError e
+      throwError $ SyntaxError e
     Right v ->
-      Right v
+      return v

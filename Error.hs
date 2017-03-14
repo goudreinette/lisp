@@ -10,6 +10,9 @@ type IOThrowsError = ExceptT LispError IO
 data LispError = UnboundVar String
                | SyntaxError ParseError
                | BadSpecialForm LispVal
+               | NumArgs Integer [LispVal]
+               | TypeMismatch LispVal
+               | Default String
 
 instance Show LispError where
   show (UnboundVar var) =
@@ -18,3 +21,7 @@ instance Show LispError where
     "Syntax Error: " ++ show parseError
   show (BadSpecialForm specialForm) =
     "Unrecognized special form: " ++ show specialForm
+
+
+-- runIOThrows :: IOThrowsError String -> IO Either String
+runIOThrows action = runExceptT action
