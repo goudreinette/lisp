@@ -10,8 +10,8 @@ import           Types
 
 
 newEnv :: IO Env
-newEnv = newIORef [] >>= (flip bindVars $ map makePrimitiveFunc primitives)
-     where makePrimitiveFunc (var, func) = (var, PrimitiveFunc func)
+newEnv = newIORef [] >>= \env -> bindVars env primitiveFuncs
+  where primitiveFuncs = map (fmap PrimitiveFunc) primitives
 
 isBound :: Env -> String -> IO Bool
 isBound envRef var = do
