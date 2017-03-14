@@ -15,6 +15,11 @@ apply (Func params body closure) args = do
   return $ last evaluated
   where evalBody env = mapM (eval env) body
 
+makeFunc :: [LispVal] -> [LispVal] -> Env -> IOThrowsError LispVal
+makeFunc params body env =
+  return $ Func stringParams  body env
+  where stringParams = (map extractString params)
+        extractString (Symbol s) = s
 
 eval :: Env -> LispVal -> IOThrowsError LispVal
 eval env val =
@@ -36,6 +41,12 @@ eval env val =
 
     List [Symbol "define", Symbol var, form] ->
       eval env form >>= defineVar env var
+
+    List (Symbol "define" : List (Symbol var : params) : body) ->
+      makeFunc params body env >>= defineVar env var
+
+    List (Symbol "lambda" : (List params) : body) ->
+      makeFunc params body env
 
     List [Symbol "if", pred, conseq, alt] -> do
       result <- eval env pred
