@@ -12,7 +12,7 @@ main = do
   globalEnv <- newEnv
   repl globalEnv
 
-repl env =
+repl env = do
   putStr "lisp=> "
   >>  getLine
   >>= evalString env
