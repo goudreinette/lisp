@@ -44,7 +44,7 @@ defineVar envRef var value = do
              valueRef <- newIORef value
              env <- readIORef envRef
              writeIORef envRef ((var, valueRef) : env)
-             return value
+             return (Symbol var)
 
 
 bindVars :: Env -> [(String, LispVal)] -> IO Env
