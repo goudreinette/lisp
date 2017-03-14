@@ -1,7 +1,13 @@
 module Repl where
 
-repl eval parse = do
+import           Val
+
+repl show eval parse = do
   putStr "lisp=> "
   line <- getLine
-  print $ eval $ parse line
-  repl eval parse
+  case parse line of
+    Right val ->
+      print $ eval val
+    Left err ->
+      print err
+  repl show eval parse

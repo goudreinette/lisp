@@ -1,15 +1,11 @@
 module Parse where
 
+import           Error
 import           Flow
 import           System.Environment
 import           Text.ParserCombinators.Parsec hiding (spaces, string)
+import           Val
 
-data LispVal = Symbol String
-             | List [LispVal]
-             | Number Float
-             | String String
-             | Bool Bool
-             deriving (Show)
 
 symbolChar = oneOf "!#$%&|*+-/:<=>?@^_~"
 
@@ -20,6 +16,7 @@ symbol = do
   return $ case symbol of
     "true"  -> Bool True
     "false" -> Bool False
+    "nil"   -> Nil
     _       -> Symbol symbol
 
 number =
@@ -53,4 +50,10 @@ exprSurroundedByWhitespace = do
   skipMany space
   return e
 
-parseLisp = parse exprSurroundedByWhitespace "lisp"
+parseLisp :: String -> Either LispError LispVal
+parseLisp code =
+  case (parse exprSurroundedByWhitespace "lisp" code) of
+    Left e ->
+      Left $ SyntaxError e
+    Right v ->
+      Right v
