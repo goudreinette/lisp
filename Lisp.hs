@@ -2,12 +2,10 @@ module Lisp where
 
 import           Env
 import           Error
+import           Eval
 import           Parse
 import           Val
 
-eval :: Env -> LispVal -> Either LispError LispVal
-eval env val =
-  Right val
 
 
 main = do
