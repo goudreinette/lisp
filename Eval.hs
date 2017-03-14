@@ -2,14 +2,18 @@ module Eval where
 
 import           Control.Monad.Except
 import           Env
-import           Error
 import           Native
 import           Types
 
-apply :: String -> [LispVal] -> LispVal
-apply func args =
-  case func of
-    ()
+apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
+apply (PrimitiveFunc func) args =
+  func args
+
+apply (Func params body closure) args = do
+  envWithArgs <- liftIO $ bindVars closure $ zip params args
+  evaluated <- evalBody envWithArgs
+  return $ last evaluated
+  where evalBody env = mapM (eval env) body
 
 
 eval :: Env -> LispVal -> IOThrowsError LispVal
@@ -40,8 +44,9 @@ eval env val =
         otherwise  -> eval env conseq
 
     List (Symbol func : args) -> do
-      evaluatedArgs <-  traverse (eval env) args
-      return $ apply func evaluatedArgs
+      evaluatedFunc <- eval env (Symbol func)
+      evaluatedArgs <- traverse (eval env) args
+      apply evaluatedFunc evaluatedArgs
 
     badForm ->
       throwError (BadSpecialForm badForm)
