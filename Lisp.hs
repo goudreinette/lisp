@@ -12,14 +12,12 @@ main = do
   globalEnv <- newEnv
   repl globalEnv
 
-repl env = do
+repl env =
   putStr "lisp=> "
-  line <- getLine
-  result <- evalString env line
-  case result of
-    Left x  -> print x
-    Right y -> print y
-  repl env
+  >>  getLine
+  >>= evalString env
+  >>= either print print
+  >>  repl env
 
 evalString :: Env -> String -> IO (Either LispError LispVal)
 evalString env expr =
