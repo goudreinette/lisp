@@ -3,12 +3,13 @@ module Eval where
 import           Control.Monad.Except
 import           Env
 import           Error
+import           Native
 import           Val
-
 
 apply :: String -> [LispVal] -> LispVal
 apply func args =
   List args
+
 
 eval :: Env -> LispVal -> IOThrowsError LispVal
 eval env val =
