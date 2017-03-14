@@ -8,6 +8,7 @@ data LispVal = Symbol String
              | String String
              | Bool Bool
              | Nil
+             deriving (Show)
 
 
 showListContents contents =
@@ -19,7 +20,7 @@ showVal (Number n)   = show n
 showVal (String s)   = "\"" ++ s ++ "\""
 showVal (Bool True)  = "true"
 showVal (Bool False) = "false"
-showVal Nil = "nil"
+showVal Nil          = "nil"
 
-instance Show LispVal where
-  show = showVal
+-- instance Show LispVal where
+--   show = showVal

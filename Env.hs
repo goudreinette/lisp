@@ -1,18 +1,25 @@
 module Env where
 
+import           Control.Monad.Except
+import           Control.Monad.Trans
+import           Control.Monad.Trans.Except
 import           Data.IORef
 import           Data.Maybe
 import           Error
 import           Val
-import Control.Monad.Trans.Except
 
 
 type Env = IORef [(String, LispVal)]
-type IOThrowsError = ExceptT LispError IO
 
 
 newEnv :: IO Env
 newEnv = newIORef []
 
--- getVar :: Env -> String ->
--- getVar envRef var =
+getVar :: Env -> String -> IOThrowsError LispVal
+getVar envRef var = do
+  env <- liftIO $ readIORef envRef
+  case lookup var env of
+    Nothing ->
+      throwError $ UnboundVar var
+    Just val ->
+      return val
