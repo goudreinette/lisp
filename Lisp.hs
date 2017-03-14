@@ -1,10 +1,9 @@
 module Lisp where
 
 import           Env
-import           Error
 import           Eval
 import           Parse
-import           Val
+import           Types
 
 
 

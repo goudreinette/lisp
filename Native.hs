@@ -1,6 +1,6 @@
 module Native where
 
-import           Val
+import           Types
 
 
 primitives :: [(String, [LispVal] -> LispVal)]

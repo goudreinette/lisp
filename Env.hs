@@ -5,12 +5,8 @@ import           Control.Monad.Trans
 import           Control.Monad.Trans.Except
 import           Data.IORef
 import           Data.Maybe
-import           Error
 import           Native
-import           Val
-
-type Env = IORef [(String, IORef LispVal)]
-
+import           Types
 
 newEnv = newIORef []
 

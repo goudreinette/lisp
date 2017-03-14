@@ -1,11 +1,10 @@
 module Parse where
 
 import           Control.Monad.Except
-import           Error
 import           Flow
 import           System.Environment
 import           Text.ParserCombinators.Parsec hiding (spaces, string)
-import           Val
+import           Types
 
 
 symbolChar = oneOf "!#$%&|*+-/:<=>?@^_~"

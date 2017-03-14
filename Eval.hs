@@ -4,11 +4,12 @@ import           Control.Monad.Except
 import           Env
 import           Error
 import           Native
-import           Val
+import           Types
 
 apply :: String -> [LispVal] -> LispVal
 apply func args =
-  List args
+  case func of
+    ()
 
 
 eval :: Env -> LispVal -> IOThrowsError LispVal
