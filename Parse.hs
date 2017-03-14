@@ -50,10 +50,14 @@ exprSurroundedByWhitespace = do
   skipMany space
   return e
 
-parseLisp :: String -> IOThrowsError LispVal
-parseLisp code =
-  case (parse exprSurroundedByWhitespace "lisp" code) of
-    Left e ->
-      throwError $ SyntaxError e
-    Right v ->
-      return v
+parseLine :: String -> IOThrowsError LispVal
+parseLine = parseSyntaxError exprSurroundedByWhitespace
+
+parseFile :: String -> IOThrowsError [LispVal]
+parseFile = parseSyntaxError (many exprSurroundedByWhitespace)
+
+parseSyntaxError :: Parser a -> String -> IOThrowsError a
+parseSyntaxError parser code =
+  either (throwError . SyntaxError)
+         return
+         (parse parser "lisp" code)

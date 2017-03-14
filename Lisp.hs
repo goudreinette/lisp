@@ -23,4 +23,4 @@ repl env = do
 
 evalString :: Env -> String -> IO (Either LispError LispVal)
 evalString env expr =
-  runExceptT (parseLisp expr >>= eval env)
+  runExceptT (parseLine expr >>= eval env)

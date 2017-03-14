@@ -3,6 +3,7 @@ module Eval where
 import           Control.Monad.Except
 import           Env
 import           Native
+import           Parse
 import           Types
 
 apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
@@ -38,6 +39,12 @@ eval env val =
 
     List [Symbol "quote", val] ->
       return val
+
+    List [Symbol "require", Symbol filepath] -> do
+      contents <- liftIO $ readFile (filepath ++ ".lisp")
+      form <- parseFile contents
+      results <- mapM (eval env) form
+      return $ List results
 
     List [Symbol "define", Symbol var, form] ->
       eval env form >>= defineVar env var
