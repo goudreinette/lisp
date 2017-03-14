@@ -1,11 +1,11 @@
 module Lisp where
 
+import           Env
 import           Parse
 import           Repl
 import           Val
-import           Env
 
 
-main = repl eval parseLisp empty
+main = repl eval parseLisp
 
 eval = id
