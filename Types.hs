@@ -44,15 +44,15 @@ data LispVal = Symbol String
 instance Show LispVal where
   show val =
     case val of
-      Symbol s          -> s
-      List list         -> "(" ++ showListContents list  ++ ")"
-      Number n          -> show n
-      String s          -> "\"" ++ s ++ "\""
-      Bool True         -> "true"
-      Bool False        -> "false"
-      Nil               -> "nil"
-      PrimitiveFunc f    -> "<primitive function>"
-      Func {params = params} -> "(lambda (" ++ showListContents params ++ ") ...)"
+      Symbol s               -> s
+      List list              -> "(" ++ showListContents list  ++ ")"
+      Number n               -> show n
+      String s               -> "\"" ++ s ++ "\""
+      Bool True              -> "true"
+      Bool False             -> "false"
+      Nil                    -> "nil"
+      PrimitiveFunc f        -> "<primitive function>"
+      Func {params = params} -> "(lambda (" ++ unwords params ++ ") ...)"
 
 
 showListContents contents =
