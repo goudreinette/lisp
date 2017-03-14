@@ -3,15 +3,16 @@ module Native where
 import           Types
 
 
+
+
 primitives :: [(String, [LispVal] -> LispVal)]
 primitives = [("+", numericBinop (+)),
-              ("-", numericBinop (-)),
-              ("*", numericBinop (*)),
-              ("/", numericBinop div),
-              ("mod", numericBinop mod)]
+               ("-", numericBinop (-)),
+               ("*", numericBinop (*)),
+               ("/", numericBinop div),
+               ("mod", numericBinop mod)]
 
 
-numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> LispVal
 numericBinop op params = Number $ foldl1 op $ map unpackNum params
 
 --

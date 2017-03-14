@@ -8,6 +8,8 @@ import           Text.ParserCombinators.Parsec (ParseError)
 -- Env
 type Env = IORef [(String, IORef LispVal)]
 
+
+
 -- Error
 type IOThrowsError = ExceptT LispError IO
 data LispError = UnboundVar String
@@ -34,7 +36,7 @@ data LispVal = Symbol String
              | String String
              | Bool Bool
              | Nil
-             | PrimitiveFunc ([LispVal] -> IOThrowsError LispVal)
+             | PrimitiveFunc ([LispVal] -> LispVal)
              | Func { params  :: [String],
                       body    :: [LispVal],
                       closure :: Env }
@@ -42,13 +44,15 @@ data LispVal = Symbol String
 instance Show LispVal where
   show val =
     case val of
-      Symbol s   -> s
-      List list  -> "(" ++ showListContents list  ++ ")"
-      Number n   -> show n
-      String s   -> "\"" ++ s ++ "\""
-      Bool True  -> "true"
-      Bool False -> "false"
-      Nil        -> "nil"
+      Symbol s          -> s
+      List list         -> "(" ++ showListContents list  ++ ")"
+      Number n          -> show n
+      String s          -> "\"" ++ s ++ "\""
+      Bool True         -> "true"
+      Bool False        -> "false"
+      Nil               -> "nil"
+      PrimitiveFunc f    -> "<primitive function>"
+      Func {params = params} -> "(lambda (" ++ showListContents params ++ ") ...)"
 
 
 showListContents contents =

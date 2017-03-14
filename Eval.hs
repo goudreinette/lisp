@@ -7,7 +7,7 @@ import           Types
 
 apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
 apply (PrimitiveFunc func) args =
-  func args
+  return $ func args
 
 apply (Func params body closure) args = do
   envWithArgs <- liftIO $ bindVars closure $ zip params args

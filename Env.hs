@@ -8,7 +8,10 @@ import           Data.Maybe
 import           Native
 import           Types
 
-newEnv = newIORef []
+
+newEnv :: IO Env
+newEnv = newIORef [] >>= (flip bindVars $ map makePrimitiveFunc primitives)
+     where makePrimitiveFunc (var, func) = (var, PrimitiveFunc func)
 
 isBound :: Env -> String -> IO Bool
 isBound envRef var = do
