@@ -1,6 +1,9 @@
 (define a 10)
 
-(define (inspect-closure x y z)
-  (define (inc x)
-    (+ x 1))
-  (env))
+(define (empty? list)
+  (= list '()))
+
+(define (reduce func acc list)
+  (if (empty? list)
+    acc
+    (reduce func (func acc (first list)) (rest list))))

@@ -7,13 +7,27 @@ import           Types
 
 primitives :: [(String, [LispVal] -> LispVal)]
 primitives = [("+", numericBinop (+)),
-               ("-", numericBinop (-)),
-               ("*", numericBinop (*)),
-               ("/", numericBinop div),
-               ("mod", numericBinop mod)]
+              ("-", numericBinop (-)),
+              ("*", numericBinop (*)),
+              ("/", numericBinop div),
+              ("mod", numericBinop mod),
+              ("=", equals),
+              ("first", first),
+              ("rest", rest)]
 
 
-numericBinop op params = Number $ foldl1 op $ map unpackNum params
+numericBinop op params =
+  Number $ foldl1 op $ map unpackNum params
+
+equals (a:b:_) =
+  Bool (a == b)
+
+first (List (x:xs):_) =
+  x
+
+rest (List (x:xs):_) =
+  List xs
+
 
 --
 -- numBoolBinop :: (Integer -> Integer -> Bool) -> [LispVal] -> LispVal

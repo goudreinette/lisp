@@ -41,8 +41,22 @@ quote = do
 
 spaces = skipMany1 space
 
+lambdaParam :: Parser LispVal
+lambdaParam = do
+  param <- char '%'
+  return $ Symbol [param]
+
+lambda = do
+  char '#'
+  char '{'
+  contents <- sepBy (expr <|> lambdaParam) spaces
+  char '}'
+  let params = filter (== Symbol "%") contents
+  return $ List [Symbol "lambda", List params, List contents]
+
+
 expr :: Parser LispVal
-expr = (symbol <|> number <|> string <|> list <|> quote)
+expr = (lambda <|> symbol <|> number <|> string <|> list <|> quote)
 
 exprSurroundedByWhitespace = do
   skipMany space

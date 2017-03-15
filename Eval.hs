@@ -34,6 +34,9 @@ eval env val =
     Number _ ->
       return val
 
+    List [] ->
+      return val
+
     Symbol s ->
       getVar env s
 
@@ -66,8 +69,8 @@ eval env val =
         Bool False -> eval env alt
         otherwise  -> eval env conseq
 
-    List (Symbol func : args) -> do
-      evaluatedFunc <- eval env (Symbol func)
+    List (func : args) -> do
+      evaluatedFunc <- eval env func
       evaluatedArgs <- traverse (eval env) args
       apply evaluatedFunc evaluatedArgs
 

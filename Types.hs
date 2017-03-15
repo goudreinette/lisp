@@ -41,6 +41,21 @@ data LispVal = Symbol String
                       body    :: [LispVal],
                       closure :: Env }
 
+instance Eq LispVal where
+  Symbol a == Symbol b =
+    a == b
+  Number a == Number b =
+    a == b
+  List a == List b =
+    a == b
+  Bool a == Bool b =
+    a == b
+  Nil == Nil =
+    True
+  a == b =
+    False
+
+
 instance Show LispVal where
   show val =
     case val of
