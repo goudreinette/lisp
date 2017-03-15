@@ -28,6 +28,13 @@ setVar envRef var value = do
   return value
 
 
+getVars :: Env -> IOThrowsError [(String, LispVal)]
+getVars envRef = do
+  env <- liftIO $ readIORef envRef
+  let vars = map fst env
+  vals <- traverse (getVar envRef) vars
+  return $ zip vars vals
+
 getVar :: Env -> String -> IOThrowsError LispVal
 getVar envRef var = do
   env <- liftIO $ readIORef envRef
@@ -52,10 +59,3 @@ bindVars envRef bindings = readIORef envRef >>= extendEnv bindings >>= newIORef
      where extendEnv bindings env = liftM (++ env) (mapM addBinding bindings)
            addBinding (var, value) = do ref <- newIORef value
                                         return (var, ref)
-
--- getBindings :: Env -> IOThrowsError Bindings
--- getBindings envRef = do
---   envRecord <- liftIO $ readIORef envRef
---   return $ bindings envRecord
-
--- lookupVar :: Env -> IOThrowsError LispVal

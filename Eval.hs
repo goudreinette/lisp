@@ -37,6 +37,11 @@ eval env val =
     Symbol s ->
       getVar env s
 
+    List [Symbol "env"] -> do
+      vars <- getVars env
+      return $ List $ map toPair vars
+      where toPair (var, val) = List [Symbol var, val]
+
     List [Symbol "quote", val] ->
       return val
 
