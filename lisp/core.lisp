@@ -1,5 +1,8 @@
 (define a 10)
 
+(define (compose f g)
+  (lambda (x) (f (g x))))
+
 (define (empty? list)
   (= list '()))
 
@@ -15,4 +18,4 @@
 
 
 (define (map func list)
-  (reduce ))
+  (reduce (compose cons func) '() list))
