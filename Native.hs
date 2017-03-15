@@ -14,7 +14,8 @@ primitives = [("+", numericBinop (+)),
               ("=", equals),
               ("first", first),
               ("rest", rest),
-              ("cons", cons)]
+              ("cons", cons),
+              ("reverse", reverseList)]
 
 
 numericBinop op params =
@@ -32,7 +33,8 @@ rest (List (x:xs):_) =
 cons (x:(List xs):_) =
   List (x:xs)
 
-
+reverseList ((List xs):_) =
+  List (reverse xs)
 
 --
 -- numBoolBinop :: (Integer -> Integer -> Bool) -> [LispVal] -> LispVal

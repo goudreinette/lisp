@@ -3,19 +3,27 @@
 (define (compose f g)
   (lambda (x) (f (g x))))
 
+(define (flip func)
+  (lambda (x y) (func y x)))
+
+
+(define (inc x)
+  (+ 1 x))
+
+(define +2 (compose inc inc))
+
 (define (empty? list)
   (= list '()))
 
-(define (reduce- func acc list)
+(define (reduce func acc list)
   (if (empty? list)
     acc
     (reduce func (func acc (first list)) (rest list))))
 
-(define (reduce func list)
-  (if (empty? list)
-    nil
-    (reduce- func (first list) (rest list))))
 
+(define (mapping func)
+  (lambda (acc x)
+    (cons (func x) acc)))
 
 (define (map func list)
-  (reduce (compose cons func) '() list))
+  (reverse (reduce (mapping func) '() list)))
