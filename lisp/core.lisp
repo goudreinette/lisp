@@ -33,3 +33,6 @@
   '(if (= ~test false)
      ~then
      ~else))
+
+(define-syntax (let var val body)
+  '((lambda (~var) ~body) ~val))
