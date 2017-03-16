@@ -10,17 +10,21 @@ apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
 apply (PrimitiveFunc func) args =
   return $ func args
 
-apply (Func params body closure) args = do
+apply (Func isMacro params body closure) args = do
   envWithArgs <- liftIO $ bindVars closure $ zip params args
   evaluated <- evalBody envWithArgs
   return $ last evaluated
   where evalBody env = mapM (eval env) body
 
-makeFunc :: [LispVal] -> [LispVal] -> Env -> IOThrowsError LispVal
-makeFunc params body env =
-  return $ Func stringParams  body env
+makeFn :: Bool -> [LispVal] -> [LispVal] -> Env -> IOThrowsError LispVal
+makeFn isMacro params body env =
+  return $ Func isMacro stringParams body env
   where stringParams = map extractString params
         extractString (Symbol s) = s
+
+makeFunc = makeFn False
+makeMacro = makeFn True
+
 
 eval :: Env -> LispVal -> IOThrowsError LispVal
 eval env val =
@@ -69,6 +73,9 @@ eval env val =
     List (Symbol "define" : List (Symbol var : params) : body) ->
       makeFunc params body env >>= defineVar env var
 
+    List (Symbol "define-syntax" : List (Symbol var : params) : body) ->
+      makeMacro params body env >>= defineVar env var
+
     List (Symbol "lambda" : List params : body) ->
       makeFunc params body env
 
@@ -80,8 +87,13 @@ eval env val =
 
     List (func : args) -> do
       evaluatedFunc <- eval env func
-      evaluatedArgs <- traverse (eval env) args
-      apply evaluatedFunc evaluatedArgs
+      case evaluatedFunc of
+        Func {isMacro = True} ->
+          apply evaluatedFunc args >>= eval env
+
+        _ -> do
+          evaluatedArgs <- traverse (eval env) args
+          apply evaluatedFunc evaluatedArgs
 
     badForm ->
       throwError (BadSpecialForm badForm)

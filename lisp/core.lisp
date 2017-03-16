@@ -27,3 +27,9 @@
 
 (define (map func list)
   (reverse (reduce (mapping func) '() list)))
+
+
+(define-syntax (unless test then else)
+  '(if (= ~test false)
+     ~then
+     ~else))
