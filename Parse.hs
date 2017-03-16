@@ -1,8 +1,6 @@
 module Parse where
 
 import           Control.Monad.Except
-import           Flow
-import           System.Environment
 import           Text.ParserCombinators.Parsec hiding (spaces, string)
 import           Types
 
@@ -22,11 +20,20 @@ symbol = do
 number =
   (Number . read) <$> many1 digit
 
+
 string = do
   char '"'
   x <- many (noneOf "\"")
   char '"'
   return $ String x
+
+
+interpolation :: Parser LispVal
+interpolation = do
+  char '~'
+  expr <- list <|> symbol
+  return expr
+
 
 list = do
   char '('
@@ -41,7 +48,7 @@ quote = do
 
 spaces = skipMany1 space
 
-lambdaParam :: Parser LispVal
+
 lambdaParam = do
   param <- char '%'
   return $ Symbol [param]
@@ -56,7 +63,7 @@ lambda = do
 
 
 expr :: Parser LispVal
-expr = (lambda <|> symbol <|> number <|> string <|> list <|> quote)
+expr = lambda <|> symbol <|> number <|> string <|> list <|> quote
 
 exprSurroundedByWhitespace = do
   skipMany space

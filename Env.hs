@@ -13,6 +13,8 @@ newEnv :: IO Env
 newEnv = newIORef [] >>= \env -> bindVars env primitiveFuncs
   where primitiveFuncs = map (fmap PrimitiveFunc) primitives
 
+
+
 isBound :: Env -> String -> IO Bool
 isBound envRef var = do
   env <- readIORef envRef

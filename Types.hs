@@ -52,7 +52,7 @@ instance Eq LispVal where
     a == b
   Nil == Nil =
     True
-  a == b =
+  _ == _ =
     False
 
 
