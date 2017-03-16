@@ -5,7 +5,7 @@ import           Text.ParserCombinators.Parsec hiding (spaces, string)
 import           Types
 
 
-symbolChar = oneOf "!#$%&|*+-/:<=>?@^_~"
+symbolChar = oneOf "!#$%&|*+-/:<=>?@^_"
 
 symbol = do
   first <- letter <|> symbolChar
@@ -28,11 +28,6 @@ string = do
   return $ String x
 
 
-interpolation :: Parser LispVal
-interpolation = do
-  char '~'
-  expr <- list <|> symbol
-  return expr
 
 
 list = do
@@ -43,8 +38,13 @@ list = do
 
 quote = do
   char '\''
-  contents <- expr
-  return $ List [Symbol "quote", contents]
+  form <- expr
+  return $ List [Symbol "quote", form]
+
+unquote = do
+  char '~'
+  form <- expr
+  return $ List [Symbol "unquote", form]
 
 spaces = skipMany1 space
 
@@ -63,7 +63,7 @@ lambda = do
 
 
 expr :: Parser LispVal
-expr = lambda <|> symbol <|> number <|> string <|> list <|> quote
+expr = lambda <|> symbol <|> number <|> string <|> list <|> quote <|> unquote
 
 exprSurroundedByWhitespace = do
   skipMany space

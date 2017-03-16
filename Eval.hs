@@ -19,7 +19,7 @@ apply (Func params body closure) args = do
 makeFunc :: [LispVal] -> [LispVal] -> Env -> IOThrowsError LispVal
 makeFunc params body env =
   return $ Func stringParams  body env
-  where stringParams = (map extractString params)
+  where stringParams = map extractString params
         extractString (Symbol s) = s
 
 eval :: Env -> LispVal -> IOThrowsError LispVal
@@ -45,8 +45,17 @@ eval env val =
       return $ List $ map toPair vars
       where toPair (var, val) = List [Symbol var, val]
 
-    List [Symbol "quote", val] ->
-      return val
+    List [Symbol "quote", form] ->
+      evalUnquotes form
+      where evalUnquotes form =
+              case form of
+                List [Symbol "unquote", form] ->
+                  eval env form
+                List items -> do
+                  results <- mapM evalUnquotes items
+                  return $ List results
+                _ ->
+                  return form
 
     List [Symbol "require", Symbol filepath] -> do
       contents <- liftIO $ readFile (filepath ++ ".lisp")
@@ -60,7 +69,7 @@ eval env val =
     List (Symbol "define" : List (Symbol var : params) : body) ->
       makeFunc params body env >>= defineVar env var
 
-    List (Symbol "lambda" : (List params) : body) ->
+    List (Symbol "lambda" : List params : body) ->
       makeFunc params body env
 
     List [Symbol "if", pred, conseq, alt] -> do
