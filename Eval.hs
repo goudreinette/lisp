@@ -12,9 +12,8 @@ apply (PrimitiveFunc func) args =
 
 apply (Func isMacro params body closure) args = do
   envWithArgs <- liftIO $ bindVars closure $ zip params args
-  evaluated <- evalBody envWithArgs
-  return $ last evaluated
-  where evalBody env = mapM (eval env) body
+  evalBody envWithArgs body
+
 
 makeFn :: Bool -> [LispVal] -> [LispVal] -> Env -> IOThrowsError LispVal
 makeFn isMacro params body env =
@@ -97,3 +96,9 @@ eval env val =
 
     badForm ->
       throwError (BadSpecialForm badForm)
+
+
+evalBody env body = do
+  evaluated <- mapM (eval env) body
+  return $ last evaluated
+
