@@ -34,5 +34,10 @@
      ~then
      ~else))
 
+(define-syntax (when test then)
+  '(if ~test
+     ~then
+     'nil))
+
 (define-syntax (let var val body)
   '((lambda (~var) ~body) ~val))
