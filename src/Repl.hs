@@ -5,11 +5,13 @@ import           Env
 import           Eval
 import           Parse
 import           System.Console.ANSI
+import           System.IO
 import           Types
 
 
 
 repl = do
+  hSetBuffering stdout NoBuffering
   globalEnv <- newEnv
   loop globalEnv
 
