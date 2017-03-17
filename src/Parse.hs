@@ -5,6 +5,7 @@ import           Text.ParserCombinators.Parsec hiding (spaces, string)
 import           Types
 
 
+{- Symbols -}
 symbolChar = oneOf "!#$%&|*+-/:<=>?@^_"
 
 symbol = do
@@ -17,10 +18,13 @@ symbol = do
     "nil"   -> Nil
     _       -> Symbol symbol
 
+
+{- Numbers -}
 number =
   (Number . read) <$> many1 digit
 
 
+{- Strings -}
 string = do
   char '"'
   x <- many (noneOf "\"")
@@ -28,14 +32,15 @@ string = do
   return $ String x
 
 
-
-
+{- Lists -}
 list = do
   char '('
   contents <- sepBy expr spaces
   char ')'
   return $ List contents
 
+
+{- Quoting -}
 quote = do
   char '\''
   form <- expr
@@ -46,9 +51,17 @@ unquote = do
   form <- expr
   return $ List [Symbol "unquote", form]
 
+
+{- Whitespace -}
 spaces = skipMany1 space
 
+comment :: Parser ()
+comment = do
+  char ';'
+  skipMany (noneOf "\n")
 
+
+{- Lambda Shorthands -}
 lambdaParam = do
   param <- char '%'
   return $ Symbol [param]
@@ -62,13 +75,16 @@ lambda = do
   return $ List [Symbol "lambda", List params, List contents]
 
 
+{- Expression -}
 expr :: Parser LispVal
 expr = lambda <|> symbol <|> number <|> string <|> list <|> quote <|> unquote
 
+
+{- Parsing -}
 exprSurroundedByWhitespace = do
   skipMany space
   e <- expr
-  skipMany space
+  skipMany (space <|> eol)
   return e
 
 parseLine :: String -> IOThrowsError LispVal

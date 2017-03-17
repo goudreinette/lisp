@@ -1,4 +1,4 @@
-module Lisp where
+module Repl where
 
 import           Control.Monad.Trans.Except
 import           Env
@@ -9,16 +9,16 @@ import           Types
 
 
 
-main = do
+repl = do
   globalEnv <- newEnv
-  repl globalEnv
+  loop globalEnv
 
-repl env =
+loop env =
   putStr "lisp=> "
   >>  getLine
   >>= evalString env
   >>= either printError print
-  >>  repl env
+  >>  loop env
 
 evalString :: Env -> String -> IO (Either LispError LispVal)
 evalString env expr =

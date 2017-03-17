@@ -25,7 +25,7 @@ setVar :: Env -> String -> LispVal -> IOThrowsError LispVal
 setVar envRef var value = do
   env <- liftIO $ readIORef envRef
   maybe (throwError $ UnboundVar var)
-        (liftIO . (flip writeIORef value))
+        (liftIO . flip writeIORef value)
         (lookup var env)
   return value
 
@@ -50,15 +50,15 @@ defineVar envRef var value = do
   if alreadyDefined
     then do
       setVar envRef var value
-      return $ (Symbol var)
+      return $ Symbol var
     else liftIO $ do
       valueRef <- newIORef value
       env <- readIORef envRef
       writeIORef envRef ((var, valueRef) : env)
-      return $ (Symbol var)
+      return $ Symbol var
 
 bindVars :: Env -> [(String, LispVal)] -> IO Env
 bindVars envRef bindings = readIORef envRef >>= extendEnv bindings >>= newIORef
-     where extendEnv bindings env = liftM (++ env) (mapM addBinding bindings)
+     where extendEnv bindings env = fmap (++ env) (mapM addBinding bindings)
            addBinding (var, value) = do ref <- newIORef value
                                         return (var, ref)

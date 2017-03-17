@@ -82,7 +82,7 @@ eval env val =
       result <- eval env pred
       case result of
         Bool False -> eval env alt
-        otherwise  -> eval env conseq
+        _          -> eval env conseq
 
     List (func : args) -> do
       evaluatedFunc <- eval env func

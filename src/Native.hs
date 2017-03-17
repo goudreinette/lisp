@@ -30,6 +30,7 @@ first (List (x:xs):_) =
 rest (List (x:xs):_) =
   List xs
 
+
 cons (x:(List xs):_) =
   List (x:xs)
 
