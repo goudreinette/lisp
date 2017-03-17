@@ -98,7 +98,7 @@ eval env val =
       throwError (BadSpecialForm badForm)
 
 
-evalBody env body = do
-  evaluated <- mapM (eval env) body
-  return $ last evaluated
+evalMany env = traverse (eval env)
+
+evalBody env body = last <$> evalMany env body
 
