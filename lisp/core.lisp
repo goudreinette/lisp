@@ -40,8 +40,5 @@
      'nil))
 
 
-(define-syntax (do forms)
-  '((lambda () ~forms))
-
 (define-syntax (let var val body)
   '((lambda (~var) ~body) ~val))

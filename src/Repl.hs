@@ -1,10 +1,12 @@
 module Repl where
 
+import           Control.Monad.Trans
 import           Control.Monad.Trans.Except
 import           Env
 import           Eval
 import           Parse
 import           System.Console.ANSI
+import           System.Console.Haskeline
 import           System.IO
 import           Types
 
@@ -13,14 +15,18 @@ import           Types
 repl = do
   hSetBuffering stdout NoBuffering
   globalEnv <- newEnv
-  loop globalEnv
+  runInputT defaultSettings $ loop globalEnv
 
-loop env =
-  putStr "lisp=> "
-  >>  getLine
-  >>= evalString env
-  >>= either printError print
-  >>  loop env
+loop env = do
+  line <- getInputLine "lisp=> "
+  case line of
+    Nothing -> return ()
+    Just expr -> do
+      evaled <- liftIO $ evalString env expr
+      liftIO $ either printError print evaled
+      loop env
+
+
 
 evalString :: Env -> String -> IO (Either LispError LispVal)
 evalString env expr =
