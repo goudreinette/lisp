@@ -31,10 +31,10 @@ rest (List (x:xs):_) =
   List xs
 
 
-cons (x:(List xs):_) =
+cons (x:List xs : _) =
   List (x:xs)
 
-reverseList ((List xs):_) =
+reverseList (List xs : _) =
   List (reverse xs)
 
 --

@@ -84,7 +84,7 @@ expr = lambda <|> symbol <|> number <|> string <|> list <|> quote <|> unquote
 exprSurroundedByWhitespace = do
   skipMany space
   e <- expr
-  skipMany (space <|> eol)
+  skipMany space
   return e
 
 parseLine :: String -> IOThrowsError LispVal
