@@ -55,15 +55,15 @@ eval env val =
                 List [Symbol "unquote", form] ->
                   eval env form
                 List items -> do
-                  results <- mapM evalUnquotes items
+                  results <- traverse evalUnquotes items
                   return $ List results
                 _ ->
                   return form
 
     List [Symbol "require", Symbol filepath] -> do
       contents <- liftIO $ readFile (filepath ++ ".lisp")
-      form <- parseFile contents
-      results <- mapM (eval env) form
+      forms <- parseFile contents
+      results <- evalMany env forms
       return $ List results
 
     List [Symbol "define", Symbol var, form] ->
@@ -90,9 +90,8 @@ eval env val =
         Func {isMacro = True} ->
           apply evaluatedFunc args >>= eval env
 
-        _ -> do
-          evaluatedArgs <- traverse (eval env) args
-          apply evaluatedFunc evaluatedArgs
+        _ ->
+          evalMany env args >>= apply evaluatedFunc
 
     badForm ->
       throwError (BadSpecialForm badForm)
