@@ -1,5 +1,11 @@
 (define a 10)
 
+; Numbers
+(define (inc x)
+  (+ 1 x))
+
+
+; Lambda
 (define (compose f g)
   (lambda (x) (f (g x))))
 
@@ -7,11 +13,8 @@
   (lambda (x y) (func y x)))
 
 
-(define (inc x)
-  (+ 1 x))
 
-(define +2 (compose inc inc))
-
+; List
 (define (empty? list)
   (= list '()))
 
@@ -20,7 +23,6 @@
     acc
     (reduce func (func acc (first list)) (rest list))))
 
-
 (define (mapping func)
   (lambda (acc x)
     (cons (func x) acc)))
@@ -28,7 +30,7 @@
 (define (map func list)
   (reverse (reduce (mapping func) '() list)))
 
-
+; Control flow
 (define-syntax (unless test then else)
   '(if (= ~test false)
      ~then
