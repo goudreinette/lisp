@@ -1,11 +1,10 @@
 (define a 10)
 
-; Numbers
+
 (define (inc x)
   (+ 1 x))
 
 
-; Lambda
 (define (compose f g)
   (lambda (x) (f (g x))))
 
@@ -14,7 +13,6 @@
 
 
 
-; List
 (define (empty? list)
   (= list '()))
 
@@ -30,7 +28,7 @@
 (define (map func list)
   (reverse (reduce (mapping func) '() list)))
 
-; Control flow
+
 (define-syntax (unless test then else)
   '(if (= ~test false)
      ~then
@@ -40,6 +38,10 @@
   '(if ~test
      ~then
      'nil))
+
+
+(define-syntax (do forms)
+  '((lambda () ~forms))
 
 (define-syntax (let var val body)
   '((lambda (~var) ~body) ~val))
