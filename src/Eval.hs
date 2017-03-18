@@ -61,11 +61,6 @@ eval env val =
       return $ List $ map toPair vars
       where toPair (var, val) = List [Symbol var, val]
 
-
-    List (Symbol "do": forms) ->
-      evalBody env forms
-
-
     List [Symbol "quote", form] ->
       evalUnquotes form
       where evalUnquotes form =
