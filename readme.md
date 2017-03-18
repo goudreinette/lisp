@@ -1,6 +1,6 @@
 # Lisp
 
-My WIP Lisp implementation, used to try out ideas, and better understand the design decisions involved in creating languages.
+My WIP Lisp implementation, used to try out ideas and better understand the design decisions involved in creating languages.
 
 The primary design goal is a simple, minimal and readable core.
 
@@ -23,3 +23,5 @@ Planned featurues:
     $ cd ./lisp
     $ stack install
     $ stack exec lisp
+
+    lisp=> (require lisp/core)
