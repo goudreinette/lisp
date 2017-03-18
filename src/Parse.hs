@@ -1,4 +1,4 @@
-module Parse where
+module Parse (parseLine, parseFile) where
 
 import           Control.Monad.Except
 import           Text.ParserCombinators.Parsec hiding (spaces, string)
@@ -6,7 +6,7 @@ import           Types
 
 
 {- Symbols -}
-symbolChar = oneOf "!#$%&|*+-/:<=>?@^_"
+symbolChar = oneOf "!#$%&|*+-/:<=>?@^_."
 
 symbol = do
   first <- letter <|> symbolChar
