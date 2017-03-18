@@ -69,13 +69,12 @@ instance Show LispVal where
       Bool False             -> "false"
       Nil                    -> "nil"
       PrimitiveFunc f        -> "<primitive function>"
-      Func {params = params, varargs = varargs} ->
-        "(lambda " ++ showParams params varargs ++ " ...)"
+      Func {params = params, varargs = varargs, body = body} ->
+        "(lambda " ++ showParams params varargs ++ " " ++ showBody body  ++ ")"
 
 
-showListContents contents =
-  unwords $ map show contents
-
+showListContents =
+  unwords . map show
 
 showParams params varargs
   | varargs && (length params == 1) =
@@ -86,3 +85,6 @@ showParams params varargs
 
   | otherwise =
     "(" ++ unwords params ++ ")"
+
+showBody =
+  concatMap show
