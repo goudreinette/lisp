@@ -13,6 +13,7 @@ The primary design goal is a simple, minimal and readable core.
 
 ### Planned features:
 * Variable arguments
+* Comments
 * Even smaller core
 
 
