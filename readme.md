@@ -10,9 +10,10 @@ The primary design goal is a simple, minimal and readable core.
 * Require-ing other files
 * Macro's
 * Lamda shorthand: `#{* 2 %}`
+* Variable arguments
+
 
 ### Planned features:
-* Variable arguments
 * Comments
 * Even smaller core
 
