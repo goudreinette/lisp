@@ -10,16 +10,29 @@ apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
 apply (PrimitiveFunc func) args =
   return $ func args
 
-apply (Func isMacro params body closure) args = do
-  envWithArgs <- liftIO $ bindVars closure $ zip params args
+apply (Func isMacro params varargs body closure) args = do
+  envWithArgs <- liftIO $ bindVars closure $ zipParamsArgs params varargs args
   evalBody envWithArgs body
+
+zipParamsArgs :: [String] -> Bool -> [LispVal] -> [(String, LispVal)]
+zipParamsArgs params varargs args =
+  if varargs then
+    let
+      (normalargs, varargs) = splitAt (length params - 1) args
+    in
+      zip (init params) normalargs ++ [(last params, List varargs)]
+  else
+    zip params args
 
 
 makeFn :: Bool -> [LispVal] -> [LispVal] -> Env -> IOThrowsError LispVal
 makeFn isMacro params body env =
-  return $ Func isMacro stringParams body env
-  where stringParams = map extractString params
+  return $ Func isMacro stringParams varargs body env
+  where stringParams = filter (/= ".") $ map extractString params
         extractString (Symbol s) = s
+        varargs = case drop (length params - 2) params of
+          [Symbol ".", Symbol vararg] -> True
+          _                           -> False
 
 makeFunc = makeFn False
 makeMacro = makeFn True

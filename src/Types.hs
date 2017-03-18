@@ -39,6 +39,7 @@ data LispVal = Symbol String
              | PrimitiveFunc ([LispVal] -> LispVal)
              | Func { isMacro :: Bool,
                       params  :: [String],
+                      varargs :: Bool,
                       body    :: [LispVal],
                       closure :: Env }
 
