@@ -11,7 +11,8 @@
 (define (flip func)
   (lambda (x y) (func y x)))
 
-
+(define (list . args)
+  args)
 
 (define (empty? list)
   (= list '()))
