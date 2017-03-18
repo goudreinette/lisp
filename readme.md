@@ -1,0 +1,25 @@
+# Lisp
+
+My WIP Lisp implementation, used to try out ideas, and better understand the design decisions involved in creating languages.
+
+The primary design goal is a simple, minimal and readable core.
+
+Currently supported features:
+* Haskeline-based REPL
+* Error messages
+* Enviroment inspection
+* Require-ing other files
+* Macro's
+* Lamda shorthand: `#{* 2 %}`
+
+Planned featurues:
+* Variable arguments
+* Even smaller core
+
+
+### Try it
+
+    $ git clone https://github.com/reinvdwoerd/lisp
+    $ cd ./lisp
+    $ stack install
+    $ stack exec lisp
