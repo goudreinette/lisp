@@ -10,7 +10,7 @@ copyright:           2017 Rein van der Woerd
 category:            Language
 build-type:          Simple
 cabal-version:       >=1.10
-extra-source-files:  README.md
+extra-source-files:  readme.md
 
 executable lisp
   hs-source-dirs:      src

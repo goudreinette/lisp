@@ -43,3 +43,8 @@
 
 (define-syntax (let var val body)
   '((lambda (~var) ~body) ~val))
+
+
+
+(define-syntax (do . forms)
+  (list (cons 'lambda (cons () forms))))
