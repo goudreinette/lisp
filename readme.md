@@ -6,7 +6,7 @@ The primary design goal is a simple, minimal and readable core.
 Currently supported features:
 * Haskeline-based REPL
 * Error messages
-* Enviroment inspection
+* Enviroment inspection: `(env)`
 * Require-ing other files
 * Macro's
 * Lamda shorthand: `#{* 2 %}`
