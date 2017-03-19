@@ -47,6 +47,10 @@
 (define (map func list)
   (reverse (reduce (mapping func) '() list)))
 
+(define (list* . items)
+  (reduce (flip cons)
+          (first (reverse items)) 
+          (rest (reverse items))))
 
 (define-syntax (unless test then else)
   '(if (= ~test false)
@@ -73,7 +77,6 @@
 
 (define-syntax (let bindings . body)
   (let-impl bindings body))
-
 
 
 (define-syntax (do . forms)
