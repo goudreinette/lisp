@@ -71,13 +71,13 @@
   (map second (pairs bindings)))
 
 (define (let-impl bindings body)
-  (cons (cons 'lambda 
-           (cons (binding-vars bindings) body))
-        (binding-vals bindings)))
+  (list* (list* 'lambda (binding-vars bindings) body) 
+         (binding-vals bindings)))
+        
 
 (define-syntax (let bindings . body)
   (let-impl bindings body))
 
 
 (define-syntax (do . forms)
-  (list (cons 'lambda (cons () forms))))
+  (list (list* 'lambda () forms)))
