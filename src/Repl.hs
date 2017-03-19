@@ -13,7 +13,6 @@ import           Types
 
 
 repl = do
-  hSetBuffering stdout NoBuffering
   globalEnv <- newEnv
   runInputT defaultSettings $ loop globalEnv
 
