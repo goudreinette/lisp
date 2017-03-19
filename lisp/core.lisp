@@ -14,6 +14,9 @@
 (define (second list)
   (first (rest list)))
 
+(define (last list)
+  (first (reverse list)))
+
 (define (list . args)
   args)
 
@@ -70,14 +73,12 @@
 (define (binding-vals bindings)
   (map second (pairs bindings)))
 
-(define (let-impl bindings body)
-  (list* (list* 'lambda (binding-vars bindings) body) 
-         (binding-vals bindings)))
-        
 
 (define-syntax (let bindings . body)
-  (let-impl bindings body))
+  (list* (list* 'lambda (binding-vars bindings) body) 
+         (binding-vals bindings)))
 
 
-(define-syntax (do . forms)
-  (list (list* 'lambda () forms)))
+(define (do . forms)
+  (last forms))
+
