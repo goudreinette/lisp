@@ -11,11 +11,25 @@
 (define (flip func)
   (lambda (x y) (func y x)))
 
+(define (second list)
+  (first (rest list)))
+
 (define (list . args)
   args)
 
+(define (pair a b)
+ '(~a ~b))
+
 (define (empty? list)
   (= list '()))
+
+(define (pairs list)
+  (define (iter acc remainder)
+    (if (empty? remainder)
+      (reverse acc)
+      (iter (cons (pair (first remainder) (second remainder)) acc)
+            (rest (rest remainder)))))
+  (iter () list))
 
 (define (reduce func acc list)
   (if (empty? list)
