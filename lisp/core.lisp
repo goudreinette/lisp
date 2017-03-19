@@ -34,6 +34,7 @@
             (rest (rest remainder)))))
   (iter () list))
 
+
 (define (reduce func acc list)
   (if (empty? list)
     acc
@@ -58,8 +59,20 @@
      'nil))
 
 
-(define-syntax (let var val body)
-  '((lambda (~var) ~body) ~val))
+
+(define (binding-vars bindings)
+  (map first (pairs bindings)))
+
+(define (binding-vals bindings)
+  (map second (pairs bindings)))
+
+(define (let-impl bindings body)
+  (cons (cons 'lambda 
+           (cons (binding-vars bindings) body))
+        (binding-vals bindings)))
+
+(define-syntax (let bindings . body)
+  (let-impl bindings body))
 
 
 
