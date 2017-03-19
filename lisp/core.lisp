@@ -82,3 +82,10 @@
 (define (do . forms)
   (last forms))
 
+(define (wrap-if acc clause)
+  '(if ~(first clause)
+     ~(second clause)
+     ~acc))
+
+(define-syntax (cond . clauses)
+  (reduce wrap-if 'nil (reverse (pairs clauses))))
