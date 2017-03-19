@@ -20,6 +20,9 @@
 (define (pair a b)
  '(~a ~b))
 
+(define (first-two list)
+  (pair (first list) (second list)))
+
 (define (empty? list)
   (= list '()))
 
@@ -27,7 +30,7 @@
   (define (iter acc remainder)
     (if (empty? remainder)
       (reverse acc)
-      (iter (cons (pair (first remainder) (second remainder)) acc)
+      (iter (cons (first-two remainder) acc)
             (rest (rest remainder)))))
   (iter () list))
 
