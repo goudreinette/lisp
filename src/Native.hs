@@ -11,18 +11,20 @@ primitives = [("+", numericBinop (+)),
               ("*", numericBinop (*)),
               ("/", numericBinop div),
               ("mod", numericBinop mod),
-              ("=", equals),
+              ("=", boolBinop (==)),
+              ("and", boolBinop (&&)),
+              ("or", boolBinop (||)),
               ("first", first),
               ("rest", rest),
               ("cons", cons),
               ("reverse", reverseList)]
 
+boolBinop op params =
+  Bool $ foldl1 op $ map unpackBool params
 
 numericBinop op params =
   Number $ foldl1 op $ map unpackNum params
 
-equals (a:b:_) =
-  Bool (a == b)
 
 first (List (x:xs):_) =
   x
