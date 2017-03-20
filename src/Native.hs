@@ -11,13 +11,17 @@ primitives = [("+", numericBinop (+)),
               ("*", numericBinop (*)),
               ("/", numericBinop div),
               ("mod", numericBinop mod),
-              ("=", boolBinop (==)),
+              ("=", equals),
               ("and", boolBinop (&&)),
               ("or", boolBinop (||)),
               ("first", first),
               ("rest", rest),
               ("cons", cons),
               ("reverse", reverseList)]
+
+equals :: [LispVal] -> LispVal
+equals vals =
+  Bool $ all (== head vals) vals
 
 boolBinop op params =
   Bool $ foldl1 op $ map unpackBool params
