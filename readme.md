@@ -2,7 +2,7 @@
 
 My WIP Lisp implementation, used to try out ideas and better understand the design decisions involved in creating languages.
 The primary design goal is a simple, minimal and readable core.
-Implementation is explained on my [blog](http://localhost:3000/blog/2017/03/18/writing-a-lisp/).
+Implementation is explained on my [blog](http://reinvanderwoerd.nl/blog/2017/03/18/writing-a-lisp/).
 
 ### Currently supported features:
 * Haskeline-based REPL
