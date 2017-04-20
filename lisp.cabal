@@ -22,4 +22,4 @@ executable lisp
                        parsec,
                        mtl,
                        ansi-terminal,
-                       haskeline
+                       haskeline-repl
