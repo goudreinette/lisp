@@ -69,5 +69,7 @@ unpackBool:: LispVal -> Bool
 unpackBool (Bool b) = b
 
 unpackString:: LispVal -> String
-unpackString (String s) = s
-
+unpackString v =
+  case v of
+    (String s) -> s
+    _          -> show v

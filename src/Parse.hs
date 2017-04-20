@@ -1,4 +1,4 @@
-module Parse (parseLine, parseFile) where
+module Parse (parseLine, parseFile, expr, parse) where
 
 import           Control.Monad.Except
 import           Text.ParserCombinators.Parsec hiding (spaces, string)
@@ -8,15 +8,19 @@ import           Types
 {- Symbols -}
 symbolChar = oneOf "!#$%&|*+-/:<=>?@^_."
 
-symbol = do
+symbolStr :: Parser String
+symbolStr = do
   first <- letter <|> symbolChar
   rest  <- many (letter <|> digit <|> symbolChar)
-  let symbol = first:rest
-  return $ case symbol of
+  return $ first:rest
+
+symbol = do
+  sym <- symbolStr
+  return $ case sym of
     "true"  -> Bool True
     "false" -> Bool False
     "nil"   -> Nil
-    _       -> Symbol symbol
+    _       -> Symbol sym
 
 
 {- Numbers -}
@@ -25,11 +29,19 @@ number =
 
 
 {- Strings -}
+interpolation = do
+  char '~'
+  list <|> symbol
+
+literalString = do
+  chars <- many1 (noneOf "\"~")
+  return $ String chars
+
 string = do
   char '"'
-  x <- many (noneOf "\"")
+  xs <- many (literalString <|> interpolation)
   char '"'
-  return $ String x
+  return $ List (Symbol "string-append" : xs)
 
 
 {- Lists -}
