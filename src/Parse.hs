@@ -33,9 +33,8 @@ interpolation = do
   char '~'
   list <|> symbol
 
-literalString = do
-  chars <- many1 (noneOf "\"~")
-  return $ String chars
+literalString =
+  String <$> many1 (noneOf "\"~")
 
 string = do
   char '"'
