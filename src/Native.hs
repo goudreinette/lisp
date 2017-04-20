@@ -50,8 +50,8 @@ reverseList (List xs : _) =
 
 -- String
 stringAppend :: [LispVal] -> LispVal
-stringAppend params =
-  String $ foldl1 (++) $ map unpackString params
+stringAppend =
+  String . concatMap unpackString
 
 
 --
@@ -68,8 +68,5 @@ unpackNum (Number n) = n
 unpackBool:: LispVal -> Bool
 unpackBool (Bool b) = b
 
-unpackString:: LispVal -> String
-unpackString v =
-  case v of
-    (String s) -> s
-    _          -> show v
+unpackString (String s) = s
+unpackString v          = show v
