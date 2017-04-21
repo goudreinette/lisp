@@ -15,7 +15,7 @@ extra-source-files:  readme.md
 executable lisp
   hs-source-dirs:      src
   main-is:             Main.hs
-  other-modules:       Main, Eval, Env, Native, Parse, Repl, Types
+  other-modules:       Main, Eval, Env, Native, Parse, Types
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5,
                        transformers,

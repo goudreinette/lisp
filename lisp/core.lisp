@@ -89,3 +89,7 @@
 
 (define-syntax (cond . clauses)
   (reduce wrap-if 'nil (reverse (pairs clauses))))
+
+
+(define (dbg-test)
+  (debug))

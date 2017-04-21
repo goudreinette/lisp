@@ -1,5 +1,9 @@
 module Main where
 
-import           Repl
+import           Env
+import           Eval
+import           System.Console.Repl
 
-main = repl
+main = do
+  globalEnv <- newEnv
+  repl "lisp=> " $ evalString globalEnv

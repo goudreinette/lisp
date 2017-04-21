@@ -2,9 +2,17 @@ module Eval where
 
 import           Control.Monad.Except
 import           Env
-import           Native
 import           Parse
+import           System.Console.Repl
 import           Types
+
+
+evalString :: Env -> String -> IO ()
+evalString env expr = do
+  result <- runExceptT (parseLine expr >>= eval env)
+  either printError print result
+
+
 
 apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
 apply (PrimitiveFunc func) args =
@@ -60,6 +68,10 @@ eval env val =
       vars <- getVars env
       return $ List $ map toPair vars
       where toPair (var, val) = List [Symbol var, val]
+
+    List [Symbol "debug"] -> do
+      liftIO $ repl "debug=> " $ evalString env
+      return Nil
 
     List [Symbol "quote", form] ->
       evalUnquotes form
