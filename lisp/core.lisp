@@ -91,5 +91,5 @@
   (reduce wrap-if 'nil (reverse (pairs clauses))))
 
 
-(define (dbg-test)
+(define (dbg-test x)
   (debug))
