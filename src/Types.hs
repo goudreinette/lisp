@@ -1,7 +1,6 @@
 module Types where
 
 import           Control.Exception
-import           Control.Monad.Trans.Except
 import           Data.IORef
 import           Data.Typeable
 import           Text.ParserCombinators.Parsec (ParseError)
