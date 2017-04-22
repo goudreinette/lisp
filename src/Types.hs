@@ -1,7 +1,9 @@
 module Types where
 
+import           Control.Exception
 import           Control.Monad.Trans.Except
 import           Data.IORef
+import           Data.Typeable
 import           Text.ParserCombinators.Parsec (ParseError)
 
 
@@ -10,16 +12,15 @@ type Env = IORef [(String, IORef LispVal)]
 
 
 -- Error
-type IOThrowsError = ExceptT LispError IO
-
-
 data LispError = UnboundVar String
                | SyntaxError ParseError
                | BadSpecialForm LispVal
                | NumArgs Integer [LispVal]
                | TypeMismatch LispVal
                | Default String
+              deriving (Typeable)
 
+instance Exception LispError
 
 instance Show LispError where
   show (UnboundVar var) =

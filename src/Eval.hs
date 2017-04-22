@@ -1,5 +1,6 @@
 module Eval where
 
+import           Control.Exception
 import           Control.Monad.Except
 import           Env
 import           Parse
@@ -8,18 +9,17 @@ import           Types
 
 
 evalString :: Env -> String -> IO ()
-evalString env expr = do
-  result <- runExceptT (parseLine expr >>= eval env)
-  either printError print result
+evalString env expr =
+  catch (parseLine expr >>= eval env >>= print) (printError :: LispError -> IO ())
 
 
 
-apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
+apply :: LispVal -> [LispVal] -> IO LispVal
 apply (PrimitiveFunc func) args =
   return $ func args
 
 apply (Func isMacro params varargs body closure) args = do
-  envWithArgs <- liftIO $ bindVars closure $ zipParamsArgs params varargs args
+  envWithArgs <- bindVars closure $ zipParamsArgs params varargs args
   evalBody envWithArgs body
 
 zipParamsArgs :: [String] -> Bool -> [LispVal] -> [(String, LispVal)]
@@ -33,7 +33,7 @@ zipParamsArgs params varargs args =
     zip params args
 
 
-makeFn :: Bool -> [LispVal] -> [LispVal] -> Env -> IOThrowsError LispVal
+makeFn :: Bool -> [LispVal] -> [LispVal] -> Env -> IO LispVal
 makeFn isMacro params body env =
   return $ Func isMacro stringParams varargs body env
   where stringParams = filter (/= ".") $ map extractString params
@@ -46,7 +46,7 @@ makeFunc = makeFn False
 makeMacro = makeFn True
 
 
-eval :: Env -> LispVal -> IOThrowsError LispVal
+eval :: Env -> LispVal -> IO LispVal
 eval env val =
   case val of
     String _ ->
@@ -70,7 +70,7 @@ eval env val =
       where toPair (var, val) = List [Symbol var, val]
 
     List [Symbol "debug"] -> do
-      liftIO $ repl "debug=> " $ evalString env
+      repl "debug=> " $ evalString env
       return Nil
 
     List [Symbol "quote", form] ->
@@ -119,7 +119,7 @@ eval env val =
           evalMany env args >>= apply evaluatedFunc
 
     badForm ->
-      throwError (BadSpecialForm badForm)
+      throw (BadSpecialForm badForm)
 
 
 evalMany env = traverse (eval env)

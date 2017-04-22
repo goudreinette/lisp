@@ -1,5 +1,6 @@
 module Parse (parseLine, parseFile, expr, parse) where
 
+import           Control.Exception
 import           Control.Monad.Except
 import           Text.ParserCombinators.Parsec hiding (spaces, string)
 import           Types
@@ -98,14 +99,14 @@ exprSurroundedByWhitespace = do
   skipMany space
   return e
 
-parseLine :: String -> IOThrowsError LispVal
+parseLine :: String -> IO LispVal
 parseLine = parseSyntaxError exprSurroundedByWhitespace
 
-parseFile :: String -> IOThrowsError [LispVal]
+parseFile :: String -> IO [LispVal]
 parseFile = parseSyntaxError (many exprSurroundedByWhitespace)
 
-parseSyntaxError :: Parser a -> String -> IOThrowsError a
+parseSyntaxError :: Parser a -> String -> IO a
 parseSyntaxError parser code =
-  either (throwError . SyntaxError)
+  either (throw . SyntaxError)
          return
          (parse parser "lisp" code)

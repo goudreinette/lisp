@@ -1,10 +1,10 @@
 module Env where
 
-import           Control.Monad.Except
+import           Control.Exception
 import           Control.Monad.Trans
-import           Control.Monad.Trans.Except
 import           Data.IORef
 import           Data.Maybe
+import           Data.Typeable
 import           Native
 import           Types
 
@@ -21,30 +21,30 @@ isBound envRef var = do
   return $ isJust $ lookup var env
 
 
-setVar :: Env -> String -> LispVal -> IOThrowsError LispVal
+setVar :: Env -> String -> LispVal -> IO LispVal
 setVar envRef var value = do
   env <- liftIO $ readIORef envRef
-  maybe (throwError $ UnboundVar var)
+  maybe (throw $ UnboundVar var)
         (liftIO . flip writeIORef value)
         (lookup var env)
   return value
 
 
-getVars :: Env -> IOThrowsError [(String, LispVal)]
+getVars :: Env -> IO [(String, LispVal)]
 getVars envRef = do
   env <- liftIO $ readIORef envRef
   let vars = map fst env
   vals <- traverse (getVar envRef) vars
   return $ zip vars vals
 
-getVar :: Env -> String -> IOThrowsError LispVal
+getVar :: Env -> String -> IO LispVal
 getVar envRef var = do
   env <- liftIO $ readIORef envRef
-  maybe (throwError $ UnboundVar var)
+  maybe (throw $ UnboundVar var)
         (liftIO . readIORef)
         (lookup var env)
 
-defineVar :: Env -> String -> LispVal -> IOThrowsError LispVal
+defineVar :: Env -> String -> LispVal -> IO LispVal
 defineVar envRef var value = do
   alreadyDefined <- liftIO $ isBound envRef var
   if alreadyDefined
