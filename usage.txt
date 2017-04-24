@@ -1,0 +1,7 @@
+Usage:
+  lisp
+  lisp <file>
+  lisp <file> --interactive  
+
+Options:
+  -i, --interactive   Start a repl session

@@ -17,9 +17,10 @@ executable lisp
   main-is:             Main.hs
   other-modules:       Eval, Env, Native, Parse, Types
   default-language:    Haskell2010
+  extensions:          QuasiQuotes
   build-depends:       base >= 4.7 && < 5,
                        transformers,
                        parsec,
                        mtl,
-                       ansi-terminal,
+                       options,
                        haskeline-repl

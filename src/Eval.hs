@@ -8,9 +8,22 @@ import           System.Console.Repl
 import           Types
 
 
-evalString :: Env -> String -> IO ()
-evalString env expr =
-  catch (parseLine expr >>= eval env >>= print) (printError :: LispError -> IO ())
+withCatch action =
+  catch action (printError :: LispError -> IO ())
+
+evalString, evalFile :: Env -> String -> IO ()
+evalString env string =
+  withCatch $
+    parseLine string
+    >>= eval env
+    >>= print
+
+evalFile env file =
+  withCatch $
+     readFile file
+     >>= parseFile
+     >>= evalMany env
+     >>= print . List
 
 
 
