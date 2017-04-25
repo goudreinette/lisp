@@ -39,7 +39,7 @@ impurePrimitives =
 
 -- Wrap
 wrapPrimitives c =
-  map (fmap (PrimitiveFunc . c))
+  map (fmap (PrimitiveFunc False . c))
 
 -- Impure
 readOne' _ [String s] =

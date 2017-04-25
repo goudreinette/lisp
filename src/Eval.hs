@@ -28,8 +28,8 @@ evalFile env file =
 
 
 apply :: Env -> LispVal -> [LispVal] -> IO LispVal
-apply env (PrimitiveFunc t) args =
-  case t of
+apply env PrimitiveFunc { purity = p } args =
+  case p of
     Pure func ->
       return $ func args
     Impure func ->
