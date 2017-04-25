@@ -1,7 +1,9 @@
 module Native where
 
+import           Env
 import           Eval
 import           Parse
+import           System.Console.Repl
 import           Types
 
 
@@ -28,21 +30,29 @@ purePrimitives =
 impurePrimitives =
   wrapPrimitives Impure
    [("read", readOne'),
-    ("eval", eval')]
+    ("eval", eval'),
+    ("env", env'),
+    ("debug", debug)]
 
 
 -- Wrap
 wrapPrimitives c =
   map (fmap (PrimitiveFunc . c))
 
-
--- Read
-readOne' env [String s] =
+-- Impure
+readOne' _ [String s] =
   readOne s
 
--- Eval
-eval' env (x:xs) =
+eval' env (x:_) =
   eval env x
+
+env' env [] =
+  fmap (List . map toPair) (getVars env)
+  where toPair (var, val) = List [Symbol var, val]
+
+debug env [] = do
+  repl "debug=> " $ evalString env
+  return Nil
 
 -- Boolean
 equals vals =
