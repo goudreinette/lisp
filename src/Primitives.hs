@@ -10,7 +10,10 @@ import           Types
 
 
 primitives :: [(String, LispVal)]
-primitives = purePrimitives ++ impurePrimitives ++ impurePrimitiveMacros
+primitives = purePrimitives ++ impurePrimitives ++ impurePrimitiveMacros ++ [("readtable", readtable)]
+
+readtable =
+  List [List [Symbol "~", PrimitiveFunc True $ Impure eval']]
 
 
 purePrimitives =
@@ -49,7 +52,7 @@ wrapPrimitives macro c =
   map (fmap (PrimitiveFunc macro . c))
 
 
--- Impure
+-- Impure Functions
 readOne' _ [String s] =
   readOne s
 
