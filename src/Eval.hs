@@ -90,9 +90,6 @@ eval env val =
       repl "debug=> " $ evalString env
       return Nil
 
-    List [Symbol "eval", form] ->
-      eval env form >>= eval env
-
     List [Symbol "quote", form] ->
       evalUnquotes form
       where evalUnquotes form =
