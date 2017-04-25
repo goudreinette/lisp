@@ -73,7 +73,7 @@ instance Show LispVal where
       Bool True              -> "true"
       Bool False             -> "false"
       Nil                    -> "nil"
-      PrimitiveFunc {}      -> "<primitive function>"
+      PrimitiveFunc { isMacro = isMacro }      -> "<primitive " ++ (if isMacro then "macro" else "function") ++ ">"
       Func {params = params, varargs = varargs, body = body} ->
         "(lambda " ++ showParams params varargs ++ " " ++ showListContents body  ++ ")"
 

@@ -38,7 +38,10 @@ impurePrimitives =
 
 impurePrimitiveMacros =
   wrapPrimitives True Impure
-    [("require", require)]
+    [("require", require),
+     ("define", define),
+     ("define-syntax", defineSyntax),
+     ("lambda", lambda)]
 
 -- Wrap
 wrapPrimitives macro c =
@@ -64,6 +67,19 @@ debug env [] = do
 require env [Symbol filepath] = do
   evalFile env (filepath ++ ".lisp")
   return Nil
+
+define env [Symbol var, form] =
+  eval env form >>= defineVar env var
+
+define env (List (Symbol var : params) : body) =
+  makeFunc params body env >>= defineVar env var
+
+defineSyntax env (List (Symbol var : params) : body) =
+  makeMacro params body env >>= defineVar env var
+
+lambda env (List params : body) =
+  makeFunc params body env
+
 
 -- Boolean
 equals vals =

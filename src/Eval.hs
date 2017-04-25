@@ -96,19 +96,6 @@ eval env val =
                 _ ->
                   return form
 
-
-    List [Symbol "define", Symbol var, form] ->
-      eval env form >>= defineVar env var
-
-    List (Symbol "define" : List (Symbol var : params) : body) ->
-      makeFunc params body env >>= defineVar env var
-
-    List (Symbol "define-syntax" : List (Symbol var : params) : body) ->
-      makeMacro params body env >>= defineVar env var
-
-    List (Symbol "lambda" : List params : body) ->
-      makeFunc params body env
-
     List [Symbol "if", pred, conseq, alt] -> do
       result <- eval env pred
       case result of
@@ -118,15 +105,11 @@ eval env val =
 
     List (func : args) -> do
       evaluatedFunc <- eval env func
-      case evaluatedFunc of
-        Func {isMacro = True} ->
-          apply env evaluatedFunc args >>= eval env
+      if isMacro evaluatedFunc then
+        apply env evaluatedFunc args >>= eval env
+      else
+        evalMany env args >>= apply env evaluatedFunc
 
-        PrimitiveFunc {isMacro = True} ->
-          apply env evaluatedFunc args >>= eval env
-
-        _ ->
-          evalMany env args >>= apply env evaluatedFunc
 
     badForm ->
       throw (BadSpecialForm badForm)
