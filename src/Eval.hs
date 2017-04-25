@@ -1,15 +1,49 @@
 module Eval where
 
 import           Control.Exception
-import           Control.Monad.Except
 import           Env
 import           Parse
 import           System.Console.Repl
 import           Types
 
 
-withCatch action =
-  catch action (printError :: LispError -> IO ())
+{- Eval -}
+eval :: Env -> LispVal -> IO LispVal
+eval env val =
+  case val of
+    String _ ->
+      return val
+
+    Bool _ ->
+      return val
+
+    Number _ ->
+      return val
+
+    List [] ->
+      return val
+
+    Nil ->
+      return val
+
+    Symbol s ->
+      getVar env s
+
+
+    List (func : args) -> do
+      evaluatedFunc <- eval env func
+      if isMacro evaluatedFunc then
+        apply env evaluatedFunc args >>= eval env
+      else
+        evalMany env args >>= apply env evaluatedFunc
+
+
+    badForm ->
+      throw (BadSpecialForm badForm)
+
+
+evalMany env = traverse (eval env)
+evalBody env body = last <$> evalMany env body
 
 evalString, evalFile :: Env -> String -> IO ()
 evalString env string =
@@ -21,7 +55,13 @@ evalFile env file =
      readFile file >>= readMany >>= evalMany env
      return ()
 
+withCatch action =
+  catch action (printError :: LispError -> IO ())
 
+
+
+
+{- Apply -}
 apply :: Env -> LispVal -> [LispVal] -> IO LispVal
 apply env PrimitiveFunc { purity = p } args =
   case p of
@@ -45,6 +85,8 @@ zipParamsArgs params varargs args =
     zip params args
 
 
+
+{- Fn -}
 makeFn :: Bool -> [LispVal] -> [LispVal] -> Env -> IO LispVal
 makeFn isMacro params body env =
   return $ Func isMacro stringParams varargs body env
@@ -56,61 +98,3 @@ makeFn isMacro params body env =
 
 makeFunc = makeFn False
 makeMacro = makeFn True
-
-
-eval :: Env -> LispVal -> IO LispVal
-eval env val =
-  case val of
-    String _ ->
-      return val
-
-    Bool _ ->
-      return val
-
-    Number _ ->
-      return val
-
-    List [] ->
-      return val
-
-    Nil ->
-      return val
-
-    Symbol s ->
-      getVar env s
-
-    List [Symbol "quote", form] ->
-      evalUnquotes form
-      where evalUnquotes form =
-              case form of
-                List [Symbol "unquote", form] ->
-                  eval env form
-                List items -> do
-                  results <- traverse evalUnquotes items
-                  return $ List results
-                _ ->
-                  return form
-
-    List [Symbol "if", pred, conseq, alt] -> do
-      result <- eval env pred
-      case result of
-        Bool False -> eval env alt
-        _          -> eval env conseq
-
-
-    List (func : args) -> do
-      evaluatedFunc <- eval env func
-      if isMacro evaluatedFunc then
-        apply env evaluatedFunc args >>= eval env
-      else
-        evalMany env args >>= apply env evaluatedFunc
-
-
-    badForm ->
-      throw (BadSpecialForm badForm)
-
-
-evalMany env = traverse (eval env)
-
-evalBody env body = last <$> evalMany env body
-

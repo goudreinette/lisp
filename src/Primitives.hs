@@ -41,7 +41,8 @@ impurePrimitiveMacros =
     [("require", require),
      ("define", define),
      ("define-syntax", defineSyntax),
-     ("lambda", lambda)]
+     ("lambda", lambda),
+     ("if", if_)]
 
 -- Wrap
 wrapPrimitives macro c =
@@ -80,6 +81,25 @@ defineSyntax env (List (Symbol var : params) : body) =
 lambda env (List params : body) =
   makeFunc params body env
 
+-- Pure macro's
+if_ env [Symbol "if", pred, conseq, alt] = do
+  result <- eval env pred
+  case result of
+    Bool False -> eval env alt
+    _          -> eval env conseq
+
+
+quote env [Symbol "quote", form] =
+  evalUnquotes form
+  where evalUnquotes form =
+          case form of
+            List [Symbol "unquote", form] ->
+              eval env form
+            List items -> do
+              results <- traverse evalUnquotes items
+              return $ List results
+            _ ->
+              return form
 
 -- Boolean
 equals vals =
