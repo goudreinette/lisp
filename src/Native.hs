@@ -1,11 +1,10 @@
 module Native where
 
+import           Parse
 import           Types
 
 
-
-
-primitives :: [(String, [LispVal] -> LispVal)]
+primitives :: [(String, [LispVal] -> IO LispVal)]
 primitives = [("+", numericBinop (+)),
               ("-", numericBinop (-)),
               ("*", numericBinop (*)),
@@ -18,40 +17,43 @@ primitives = [("+", numericBinop (+)),
               ("rest", rest),
               ("cons", cons),
               ("reverse", reverseList),
-              ("string-append", stringAppend)]
+              ("string-append", stringAppend),
+              ("read", readOne')]
 
+-- Read
+readOne' [String s] =
+  readOne s
 
-
-equals :: [LispVal] -> LispVal
+-- Boolean
 equals vals =
-  Bool $ all (== head vals) vals
+  return $ Bool $ all (== head vals) vals
 
 -- Varargs
 boolBinop op params =
-  Bool $ foldl1 op $ map unpackBool params
+   return $ Bool $ foldl1 op $ map unpackBool params
 
 numericBinop op params =
-  Number $ foldl1 op $ map unpackNum params
+  return $ Number $ foldl1 op $ map unpackNum params
 
 
 -- List
 first (List (x:xs):_) =
-  x
+  return x
 
 rest (List (x:xs):_) =
-  List xs
+  return $ List xs
 
 cons (x:List xs : _) =
-  List (x:xs)
+  return $ List (x:xs)
 
 reverseList (List xs : _) =
-  List (reverse xs)
+  return $ List (reverse xs)
 
 
 -- String
-stringAppend :: [LispVal] -> LispVal
+stringAppend :: [LispVal] -> IO LispVal
 stringAppend =
-  String . concatMap unpackString
+  return . String . concatMap stringVal
 
 
 --
@@ -62,11 +64,15 @@ stringAppend =
 -- boolBoolBinop op params = Val.Bool $ foldl1 op $ map unpackBool params
 
 -- Unpack
+
 unpackNum :: LispVal -> Integer
 unpackNum (Number n) = n
 
 unpackBool:: LispVal -> Bool
 unpackBool (Bool b) = b
 
+
 unpackString (String s) = s
-unpackString v          = show v
+
+stringVal (String s) = s
+stringVal v          = show v

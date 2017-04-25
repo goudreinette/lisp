@@ -5,14 +5,12 @@ import           Control.Monad.Trans
 import           Data.IORef
 import           Data.Maybe
 import           Data.Typeable
-import           Native
 import           Types
 
 
-newEnv :: IO Env
-newEnv = newIORef [] >>= \env -> bindVars env primitiveFuncs
+newEnv :: [(String, [LispVal] -> IO LispVal)] -> IO Env
+newEnv primitives = newIORef [] >>= \env -> bindVars env primitiveFuncs
   where primitiveFuncs = map (fmap PrimitiveFunc) primitives
-
 
 
 isBound :: Env -> String -> IO Bool

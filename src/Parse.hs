@@ -1,4 +1,4 @@
-module Parse (parseLine, parseFile, expr, parse) where
+module Parse (readOne, readMany, expr, parse) where
 
 import           Control.Exception
 import           Control.Monad.Except
@@ -99,11 +99,11 @@ exprSurroundedByWhitespace = do
   skipMany space
   return e
 
-parseLine :: String -> IO LispVal
-parseLine = parseSyntaxError exprSurroundedByWhitespace
+readOne :: String -> IO LispVal
+readOne = parseSyntaxError exprSurroundedByWhitespace
 
-parseFile :: String -> IO [LispVal]
-parseFile = parseSyntaxError (many exprSurroundedByWhitespace)
+readMany :: String -> IO [LispVal]
+readMany = parseSyntaxError (many exprSurroundedByWhitespace)
 
 parseSyntaxError :: Parser a -> String -> IO a
 parseSyntaxError parser code =

@@ -14,14 +14,14 @@ withCatch action =
 evalString, evalFile :: Env -> String -> IO ()
 evalString env string =
   withCatch $
-    parseLine string
+    readOne string
     >>= eval env
     >>= print
 
 evalFile env file =
   withCatch $
      readFile file
-     >>= parseFile
+     >>= readMany
      >>= evalMany env
      >>= print . List
 
@@ -29,7 +29,7 @@ evalFile env file =
 
 apply :: LispVal -> [LispVal] -> IO LispVal
 apply (PrimitiveFunc func) args =
-  return $ func args
+  func args
 
 apply (Func isMacro params varargs body closure) args = do
   envWithArgs <- bindVars closure $ zipParamsArgs params varargs args
@@ -86,6 +86,9 @@ eval env val =
       repl "debug=> " $ evalString env
       return Nil
 
+    List [Symbol "eval", form] ->
+      eval env form >>= eval env
+
     List [Symbol "quote", form] ->
       evalUnquotes form
       where evalUnquotes form =
@@ -100,7 +103,7 @@ eval env val =
 
     List [Symbol "require", Symbol filepath] -> do
       contents <- liftIO $ readFile (filepath ++ ".lisp")
-      forms <- parseFile contents
+      forms <- readMany contents
       results <- evalMany env forms
       return $ List results
 
@@ -121,6 +124,7 @@ eval env val =
       case result of
         Bool False -> eval env alt
         _          -> eval env conseq
+
 
     List (func : args) -> do
       evaluatedFunc <- eval env func
