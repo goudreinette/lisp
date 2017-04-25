@@ -140,7 +140,6 @@ unpackBool:: LispVal -> Bool
 unpackBool (Bool b) = b
 
 
-unpackString (String s) = s
 
 stringVal (String s) = s
 stringVal v          = show v
