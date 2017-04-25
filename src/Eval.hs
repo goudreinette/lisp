@@ -78,6 +78,9 @@ eval env val =
     List [] ->
       return val
 
+    Nil ->
+      return val
+
     Symbol s ->
       getVar env s
 
@@ -93,9 +96,6 @@ eval env val =
                 _ ->
                   return form
 
-    List [Symbol "require", Symbol filepath] -> do
-      evalFile env (filepath ++ ".lisp")
-      return Nil
 
     List [Symbol "define", Symbol var, form] ->
       eval env form >>= defineVar env var
@@ -120,6 +120,9 @@ eval env val =
       evaluatedFunc <- eval env func
       case evaluatedFunc of
         Func {isMacro = True} ->
+          apply env evaluatedFunc args >>= eval env
+
+        PrimitiveFunc {isMacro = True} ->
           apply env evaluatedFunc args >>= eval env
 
         _ ->

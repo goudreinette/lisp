@@ -10,11 +10,11 @@ import           Types
 
 
 primitives :: [(String, LispVal)]
-primitives = purePrimitives ++ impurePrimitives
+primitives = purePrimitives ++ impurePrimitives ++ impurePrimitiveMacros
 
 
 purePrimitives =
-  wrapPrimitives Pure
+  wrapPrimitives False Pure
    [("+", numericBinop (+)),
     ("-", numericBinop (-)),
     ("*", numericBinop (*)),
@@ -30,16 +30,20 @@ purePrimitives =
     ("string-append", stringAppend)]
 
 impurePrimitives =
-  wrapPrimitives Impure
+  wrapPrimitives False Impure
    [("read", readOne'),
     ("eval", eval'),
     ("env", env'),
     ("debug", debug)]
 
+impurePrimitiveMacros =
+  wrapPrimitives True Impure
+    [("require", require)]
 
 -- Wrap
-wrapPrimitives c =
-  map (fmap (PrimitiveFunc False . c))
+wrapPrimitives macro c =
+  map (fmap (PrimitiveFunc macro . c))
+
 
 -- Impure
 readOne' _ [String s] =
@@ -54,6 +58,11 @@ env' env [] =
 
 debug env [] = do
   repl "debug=> " $ evalString env
+  return Nil
+
+-- Impure Macro's
+require env [Symbol filepath] = do
+  evalFile env (filepath ++ ".lisp")
   return Nil
 
 -- Boolean
