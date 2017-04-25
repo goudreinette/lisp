@@ -1,4 +1,4 @@
-module Native where
+module Primitives where
 
 import           Control.Monad.Trans
 import           Env

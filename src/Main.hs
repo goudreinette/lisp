@@ -2,7 +2,7 @@ module Main where
 
 import           Env
 import           Eval
-import           Native
+import           Primitives
 import           System.Console.Repl
 import           System.Environment  (getArgs)
 

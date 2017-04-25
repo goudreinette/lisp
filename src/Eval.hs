@@ -14,17 +14,12 @@ withCatch action =
 evalString, evalFile :: Env -> String -> IO ()
 evalString env string =
   withCatch $
-    readOne string
-    >>= eval env
-    >>= print
+    readOne string >>= eval env >>= print
 
 evalFile env file =
-  withCatch $
-     readFile file
-     >>= readMany
-     >>= evalMany env
-     >>= print . List
-
+  withCatch $ do
+     readFile file >>= readMany >>= evalMany env
+     return ()
 
 
 apply :: Env -> LispVal -> [LispVal] -> IO LispVal
