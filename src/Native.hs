@@ -1,7 +1,9 @@
 module Native where
 
+import           Control.Monad.Trans
 import           Env
 import           Eval
+import           Flow
 import           Parse
 import           System.Console.Repl
 import           Types

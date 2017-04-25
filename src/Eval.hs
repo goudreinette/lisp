@@ -94,10 +94,8 @@ eval env val =
                   return form
 
     List [Symbol "require", Symbol filepath] -> do
-      contents <- liftIO $ readFile (filepath ++ ".lisp")
-      forms <- readMany contents
-      results <- evalMany env forms
-      return $ List results
+      evalFile env (filepath ++ ".lisp")
+      return Nil
 
     List [Symbol "define", Symbol var, form] ->
       eval env form >>= defineVar env var

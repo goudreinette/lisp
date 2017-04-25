@@ -22,4 +22,5 @@ executable lisp
                        transformers,
                        parsec,
                        mtl,
-                       haskeline-repl
+                       haskeline-repl,
+                       flow
