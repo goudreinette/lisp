@@ -31,13 +31,16 @@ instance Show LispError where
 
 
 -- Val
+data PrimitiveFuncType = Pure ([LispVal] -> LispVal)
+                       | Impure (Env -> [LispVal] -> IO LispVal)
+
 data LispVal = Symbol String
              | List [LispVal]
              | Number Integer
              | String String
              | Bool Bool
              | Nil
-             | PrimitiveFunc ([LispVal] -> IO LispVal)
+             | PrimitiveFunc PrimitiveFuncType
              | Func { isMacro :: Bool,
                       params  :: [String],
                       varargs :: Bool,
@@ -69,7 +72,7 @@ instance Show LispVal where
       Bool True              -> "true"
       Bool False             -> "false"
       Nil                    -> "nil"
-      PrimitiveFunc f        -> "<primitive function>"
+      PrimitiveFunc _      -> "<primitive function>"
       Func {params = params, varargs = varargs, body = body} ->
         "(lambda " ++ showParams params varargs ++ " " ++ showListContents body  ++ ")"
 

@@ -1,59 +1,79 @@
 module Native where
 
+import           Eval
 import           Parse
 import           Types
 
 
-primitives :: [(String, [LispVal] -> IO LispVal)]
-primitives = [("+", numericBinop (+)),
-              ("-", numericBinop (-)),
-              ("*", numericBinop (*)),
-              ("/", numericBinop div),
-              ("mod", numericBinop mod),
-              ("=", equals),
-              ("and", boolBinop (&&)),
-              ("or", boolBinop (||)),
-              ("first", first),
-              ("rest", rest),
-              ("cons", cons),
-              ("reverse", reverseList),
-              ("string-append", stringAppend),
-              ("read", readOne')]
+primitives :: [(String, LispVal)]
+primitives = purePrimitives ++ impurePrimitives
+
+
+purePrimitives =
+  wrapPrimitives Pure
+   [("+", numericBinop (+)),
+    ("-", numericBinop (-)),
+    ("*", numericBinop (*)),
+    ("/", numericBinop div),
+    ("mod", numericBinop mod),
+    ("=", equals),
+    ("and", boolBinop (&&)),
+    ("or", boolBinop (||)),
+    ("first", first),
+    ("rest", rest),
+    ("cons", cons),
+    ("reverse", reverseList),
+    ("string-append", stringAppend)]
+
+impurePrimitives =
+  wrapPrimitives Impure
+   [("read", readOne'),
+    ("eval", eval')]
+
+
+-- Wrap
+wrapPrimitives c =
+  map (fmap (PrimitiveFunc . c))
+
 
 -- Read
-readOne' [String s] =
+readOne' env [String s] =
   readOne s
+
+-- Eval
+eval' env (x:xs) =
+  eval env x
 
 -- Boolean
 equals vals =
-  return $ Bool $ all (== head vals) vals
+   Bool $ all (== head vals) vals
 
 -- Varargs
 boolBinop op params =
-   return $ Bool $ foldl1 op $ map unpackBool params
+  Bool $ foldl1 op $ map unpackBool params
 
 numericBinop op params =
-  return $ Number $ foldl1 op $ map unpackNum params
+  Number $ foldl1 op $ map unpackNum params
 
 
 -- List
 first (List (x:xs):_) =
-  return x
+  x
 
 rest (List (x:xs):_) =
-  return $ List xs
+  List xs
 
 cons (x:List xs : _) =
-  return $ List (x:xs)
+  List (x:xs)
 
 reverseList (List xs : _) =
-  return $ List (reverse xs)
+  List (reverse xs)
 
 
 -- String
-stringAppend :: [LispVal] -> IO LispVal
+stringAppend :: [LispVal] -> LispVal
 stringAppend =
-  return . String . concatMap stringVal
+  String . concatMap stringVal
 
 
 --

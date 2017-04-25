@@ -8,9 +8,8 @@ import           Data.Typeable
 import           Types
 
 
-newEnv :: [(String, [LispVal] -> IO LispVal)] -> IO Env
-newEnv primitives = newIORef [] >>= \env -> bindVars env primitiveFuncs
-  where primitiveFuncs = map (fmap PrimitiveFunc) primitives
+newEnv :: [(String, LispVal)] -> IO Env
+newEnv vars = newIORef [] >>= \env -> bindVars env vars
 
 
 isBound :: Env -> String -> IO Bool

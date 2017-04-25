@@ -2,11 +2,10 @@ module Main where
 
 import           Env
 import           Eval
-import qualified Native
+import           Native
 import           System.Console.Repl
 import           System.Environment  (getArgs)
 
-primitives = Native.primitives
 
 main = do
   args <- getArgs

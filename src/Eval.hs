@@ -27,11 +27,15 @@ evalFile env file =
 
 
 
-apply :: LispVal -> [LispVal] -> IO LispVal
-apply (PrimitiveFunc func) args =
-  func args
+apply :: Env -> LispVal -> [LispVal] -> IO LispVal
+apply env (PrimitiveFunc t) args =
+  case t of
+    Pure func ->
+      return $ func args
+    Impure func ->
+      func env args
 
-apply (Func isMacro params varargs body closure) args = do
+apply env (Func isMacro params varargs body closure) args = do
   envWithArgs <- bindVars closure $ zipParamsArgs params varargs args
   evalBody envWithArgs body
 
@@ -130,10 +134,10 @@ eval env val =
       evaluatedFunc <- eval env func
       case evaluatedFunc of
         Func {isMacro = True} ->
-          apply evaluatedFunc args >>= eval env
+          apply env evaluatedFunc args >>= eval env
 
         _ ->
-          evalMany env args >>= apply evaluatedFunc
+          evalMany env args >>= apply env evaluatedFunc
 
     badForm ->
       throw (BadSpecialForm badForm)
