@@ -30,6 +30,18 @@ eval env val =
       getVar env s
 
 
+    List [Symbol "quote", form] ->
+      evalUnquotes form
+      where evalUnquotes form =
+              case form of
+                List [Symbol "unquote", form] ->
+                  eval env form
+                List items -> do
+                  results <- traverse evalUnquotes items
+                  return $ List results
+                _ ->
+                  return form
+
     List (func : args) -> do
       evaluatedFunc <- eval env func
       if isMacro evaluatedFunc then
