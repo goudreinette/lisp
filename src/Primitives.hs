@@ -47,8 +47,7 @@ impurePrimitiveMacros =
      ("define", define),
      ("define-syntax", defineSyntax),
      ("lambda", lambda),
-     ("if", if_),
-     ("quote", quote)]
+     ("if", if_)]
 
 -- Wrap
 wrapPrimitives macro c =
@@ -94,18 +93,6 @@ if_ env [pred, conseq, alt] = do
     Bool False -> eval env alt
     _          -> eval env conseq
 
-quote env [form] = do
-  result <- evalUnquotes form
-  return $ List [Symbol "quote", result]
-  where evalUnquotes form =
-          case form of
-            List [Symbol "unquote", form] ->
-              eval env form
-            List items -> do
-              results <- traverse evalUnquotes items
-              return $ List results
-            _ ->
-              return form
 
 -- Boolean
 equals vals =

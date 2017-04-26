@@ -14,13 +14,6 @@ eval env val =
     Symbol s ->
       getVar env s
 
-    List (func : args) -> do
-      evaluatedFunc <- eval env func
-      if isMacro evaluatedFunc then
-        apply env evaluatedFunc args >>= eval env
-      else
-        evalMany env args >>= apply env evaluatedFunc
-
     List [Symbol "quote", form] ->
       evalUnquotes form
       where evalUnquotes form =
@@ -32,6 +25,13 @@ eval env val =
                   return $ List results
                 _ ->
                   return form
+
+    List (func : args) -> do
+      evaluatedFunc <- eval env func
+      if isMacro evaluatedFunc then
+        apply env evaluatedFunc args >>= eval env
+      else
+        evalMany env args >>= apply env evaluatedFunc
 
     _ ->
       return val
