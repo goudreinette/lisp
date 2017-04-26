@@ -13,7 +13,7 @@ primitives :: [(String, LispVal)]
 primitives = purePrimitives ++ impurePrimitives ++ impurePrimitiveMacros ++ [("readtable", readtable)]
 
 readtable =
-  List [List [Symbol "~", Symbol "eval"],
+  List [List [Symbol "~", Symbol "unquote"],
         List [Symbol "'", Symbol "quote"]]
 
 
@@ -37,6 +37,7 @@ impurePrimitives =
   wrapPrimitives False Impure
    [("read", readOne'),
     ("eval", eval'),
+    ("unquote", eval'),
     ("env", env'),
     ("debug", debug)]
 
@@ -86,13 +87,24 @@ defineSyntax env (List (Symbol var : params) : body) =
 lambda env (List params : body) =
   makeFunc params body env
 
--- Pure macro's
 if_ env [pred, conseq, alt] = do
   result <- eval env pred
   case result of
     Bool False -> eval env alt
     _          -> eval env conseq
 
+quote env [form] = do
+  result <- evalUnquotes form
+  return $ List [Symbol "quote", result]
+  where evalUnquotes form =
+          case form of
+            List [Symbol "unquote", form] ->
+              eval env form
+            List items -> do
+              results <- traverse evalUnquotes items
+              return $ List results
+            _ ->
+              return form
 
 -- Boolean
 equals vals =

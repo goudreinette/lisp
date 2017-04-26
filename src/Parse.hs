@@ -2,54 +2,14 @@ module Parse (readOne, readMany, expr, parse) where
 
 import           Control.Exception
 import           Control.Monad.Except
+import           Control.Monad.Reader
 import           Text.ParserCombinators.Parsec hiding (spaces)
 import           Types
 
-
-{- Symbols -}
-symbolChar = oneOf "!#$%&|*+-/:<=>?@^_."
-
-symbolStr :: Parser String
-symbolStr = do
-  first <- letter <|> symbolChar
-  rest  <- many (letter <|> digit <|> symbolChar)
-  return $ first:rest
-
-symbol = do
-  sym <- symbolStr
-  return $ case sym of
-    "true"  -> Bool True
-    "false" -> Bool False
-    "nil"   -> Nil
-    _       -> Symbol sym
+type ReadTable = [(String, String)]
 
 
-{- Numbers -}
-number =
-  (Number . read) <$> many1 digit
 
-
-{- Strings -}
-interpolation = do
-  char '~'
-  list <|> symbol
-
-literalString =
-  String <$> many1 (noneOf "\"~")
-
-string' = do
-  char '"'
-  xs <- many (literalString <|> interpolation)
-  char '"'
-  return $ List (Symbol "string-append" : xs)
-
-
-{- Lists -}
-list = do
-  char '('
-  contents <- sepBy expr spaces
-  char ')'
-  return $ List contents
 
 
 {- Whitespace -}
@@ -61,45 +21,84 @@ comment = do
   skipMany (noneOf "\n")
 
 
-{- Lambda Shorthands -}
-lambdaParam = do
-  param <- char '%'
-  return $ Symbol [param]
-
-lambda = do
-  char '#'
-  char '{'
-  contents <- sepBy (expr <|> lambdaParam) spaces
-  char '}'
-  let params = filter (== Symbol "%") contents
-  return $ List [Symbol "lambda", List params, List contents]
-
-
 {- Expression -}
-expr :: Parser LispVal
-expr = lambda <|> symbol <|> number <|> string' <|> list
+expr :: ReadTable -> Parser LispVal
+expr readtable =
+  e
+  where e = p <|> lambda <|> symbol <|> number <|> string' <|> list
+        p = readTableParser readtable
 
+        {- Lambda Shorthands -}
+        lambdaParam = do
+          param <- char '%'
+          return $ Symbol [param]
+
+        lambda = do
+          char '#'
+          char '{'
+          contents <- sepBy (e <|> lambdaParam) spaces
+          char '}'
+          let params = filter (== Symbol "%") contents
+          return $ List [Symbol "lambda", List params, List contents]
+
+        {- Lists -}
+        list = do
+          char '('
+          contents <- sepBy e spaces
+          char ')'
+          return $ List contents
+
+        {- Strings -}
+        literalString =
+          String <$> many1 (noneOf "\"~")
+
+        string' = do
+          char '"'
+          xs <- many (p <|> literalString)
+          char '"'
+          return $ List (Symbol "string-append" : xs)
+
+
+        {- Symbols -}
+        symbolChar = oneOf "!#$%&|*+-/:<=>?@^_."
+
+        symbolStr = do
+          first <- letter <|> symbolChar
+          rest  <- many (letter <|> digit <|> symbolChar)
+          return $ first:rest
+
+        symbol = do
+          sym <- symbolStr
+          return $ case sym of
+            "true"  -> Bool True
+            "false" -> Bool False
+            "nil"   -> Nil
+            _       -> Symbol sym
+
+        {- Numbers -}
+        number =
+          (Number . read) <$> many1 digit
 
 {- Parsing -}
-readTableParser :: [(String, String)] -> Parser LispVal
-readTableParser pairs =
-  foldl1 (<|>) $ map makeParser pairs
+readTableParser :: ReadTable -> Parser LispVal
+readTableParser readtable =
+  foldl1 (<|>) $ map makeParser readtable
   where makeParser (s, sym) = do
           string s
-          e <- expr
+          e <- expr readtable
           return $ List [Symbol sym, e]
 
 
 exprSurroundedByWhitespace readtable = do
   skipMany space
-  e <- expr <|>readTableParser readtable
+  e <- expr  readtable
   skipMany space
   return e
 
-readOne :: [(String, String)] -> String -> IO LispVal
+readOne :: ReadTable -> String -> IO LispVal
 readOne readtable = parseSyntaxError (exprSurroundedByWhitespace readtable)
 
-readMany :: [(String, String)] -> String -> IO [LispVal]
+readMany :: ReadTable -> String -> IO [LispVal]
 readMany readtable = parseSyntaxError (many (exprSurroundedByWhitespace readtable))
 
 parseSyntaxError :: Parser a -> String -> IO a
