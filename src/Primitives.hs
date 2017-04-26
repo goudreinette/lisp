@@ -47,7 +47,8 @@ impurePrimitiveMacros =
      ("define", define),
      ("define-syntax", defineSyntax),
      ("lambda", lambda),
-     ("if", if_)]
+     ("if", if_),
+     ("quote", quote)]
 
 -- Wrap
 wrapPrimitives macro c =

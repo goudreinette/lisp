@@ -11,24 +11,15 @@ import           Types
 eval :: Env -> LispVal -> IO LispVal
 eval env val =
   case val of
-    String _ ->
-      return val
-
-    Bool _ ->
-      return val
-
-    Number _ ->
-      return val
-
-    List [] ->
-      return val
-
-    Nil ->
-      return val
-
     Symbol s ->
       getVar env s
 
+    List (func : args) -> do
+      evaluatedFunc <- eval env func
+      if isMacro evaluatedFunc then
+        apply env evaluatedFunc args >>= eval env
+      else
+        evalMany env args >>= apply env evaluatedFunc
 
     List [Symbol "quote", form] ->
       evalUnquotes form
@@ -42,16 +33,8 @@ eval env val =
                 _ ->
                   return form
 
-    List (func : args) -> do
-      evaluatedFunc <- eval env func
-      if isMacro evaluatedFunc then
-        apply env evaluatedFunc args >>= eval env
-      else
-        evalMany env args >>= apply env evaluatedFunc
-
-
-    badForm ->
-      throw (BadSpecialForm badForm)
+    _ ->
+      return val
 
 
 evalMany env = traverse (eval env)
