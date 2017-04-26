@@ -90,6 +90,11 @@
 (define-syntax (cond . clauses)
   (reduce wrap-if 'nil (reverse (pairs clauses))))
 
+(define-syntax (trace form)
+  '(let ((result (eval form)))
+     (print (string-append form " => " result))
+     result))
+
 
 (define (dbg-test x)
   (debug))

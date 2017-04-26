@@ -20,9 +20,8 @@ eval env val =
               case form of
                 List [Symbol "unquote", form] ->
                   eval env form
-                List items -> do
-                  results <- traverse evalUnquotes items
-                  return $ List results
+                List items ->
+                  List <$> traverse evalUnquotes items
                 _ ->
                   return form
 
@@ -39,12 +38,6 @@ eval env val =
 
 evalMany env = traverse (eval env)
 evalBody env body = last <$> evalMany env body
-
-getReadtable env = do
-  List pairs <- getVar env "readtable"
-  return $ map extractPair pairs
-  where extractPair (List [Symbol s, Symbol sym]) =
-          (s, sym)
 
 
 evalString, evalFile :: Env -> String -> IO ()

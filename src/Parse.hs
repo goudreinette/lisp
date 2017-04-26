@@ -50,7 +50,7 @@ expr readtable =
 
         {- Strings -}
         literalString =
-          String <$> many1 (noneOf "\"~")
+          String <$> many1 (noneOf ('\"' : concatMap fst readtable))
 
         string' = do
           char '"'

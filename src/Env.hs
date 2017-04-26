@@ -11,6 +11,12 @@ import           Types
 newEnv :: [(String, LispVal)] -> IO Env
 newEnv vars = newIORef [] >>= \env -> bindVars env vars
 
+getReadtable :: Env -> IO [(String, String)]
+getReadtable env = do
+  List pairs <- getVar env "readtable"
+  return $ map extractPair pairs
+  where extractPair (List [Symbol s, Symbol sym]) =
+          (s, sym)
 
 isBound :: Env -> String -> IO Bool
 isBound envRef var = do

@@ -35,11 +35,12 @@ purePrimitives =
 
 impurePrimitives =
   wrapPrimitives False Impure
-   [("read", readOne'),
+   [("read", read'),
     ("eval", eval'),
     ("unquote", eval'),
     ("env", env'),
-    ("debug", debug)]
+    ("debug", debug),
+    ("print", print')]
 
 impurePrimitiveMacros =
   wrapPrimitives True Impure
@@ -55,7 +56,7 @@ wrapPrimitives macro c =
 
 
 -- Impure Functions
-readOne' env [String s] = do
+read' env [String s] = do
   readtable <- getReadtable env
   readOne readtable s
 
@@ -68,6 +69,10 @@ env' env [] =
 
 debug env [] = do
   repl "debug=> " $ evalString env
+  return Nil
+
+print' _ [form] = do
+  print form
   return Nil
 
 -- Impure Macro's
@@ -110,8 +115,13 @@ numericBinop op params =
 first (List (x:xs):_) =
   x
 
+
+
 rest (List (x:xs):_) =
   List xs
+
+rest [List x] =
+  List x
 
 cons (x:List xs : _) =
   List (x:xs)
