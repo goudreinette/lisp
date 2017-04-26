@@ -57,14 +57,23 @@ eval env val =
 evalMany env = traverse (eval env)
 evalBody env body = last <$> evalMany env body
 
-evalString, evalFile :: Env -> String -> IO ()
-evalString env string =
-  withCatch $
-    readOne string >>= eval env >>= print
+getReadtable env = do
+  List pairs <- getVar env "readtable"
+  return $ map extractPair pairs
+  where extractPair (List [Symbol s, Symbol sym]) =
+          (s, sym)
 
-evalFile env file =
+
+evalString, evalFile :: Env -> String -> IO ()
+evalString env string = do
+  readtable <- getReadtable env
+  withCatch $
+    readOne readtable string >>= eval env >>= print
+
+evalFile env file = do
+  readtable <- getReadtable env
   withCatch $ do
-     readFile file >>= readMany >>= evalMany env
+     readFile file >>= readMany readtable >>= evalMany env
      return ()
 
 withCatch action =

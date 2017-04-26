@@ -13,7 +13,8 @@ primitives :: [(String, LispVal)]
 primitives = purePrimitives ++ impurePrimitives ++ impurePrimitiveMacros ++ [("readtable", readtable)]
 
 readtable =
-  List [List [Symbol "~", PrimitiveFunc True $ Impure eval']]
+  List [List [Symbol "~", Symbol "eval"],
+        List [Symbol "'", Symbol "quote"]]
 
 
 purePrimitives =
@@ -53,8 +54,9 @@ wrapPrimitives macro c =
 
 
 -- Impure Functions
-readOne' _ [String s] =
-  readOne s
+readOne' env [String s] = do
+  readtable <- getReadtable env
+  readOne readtable s
 
 eval' env (x:_) =
   eval env x

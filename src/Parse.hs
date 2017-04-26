@@ -2,7 +2,7 @@ module Parse (readOne, readMany, expr, parse) where
 
 import           Control.Exception
 import           Control.Monad.Except
-import           Text.ParserCombinators.Parsec hiding (spaces, string)
+import           Text.ParserCombinators.Parsec hiding (spaces)
 import           Types
 
 
@@ -37,7 +37,7 @@ interpolation = do
 literalString =
   String <$> many1 (noneOf "\"~")
 
-string = do
+string' = do
   char '"'
   xs <- many (literalString <|> interpolation)
   char '"'
@@ -50,18 +50,6 @@ list = do
   contents <- sepBy expr spaces
   char ')'
   return $ List contents
-
-
-{- Quoting -}
-quote = do
-  char '\''
-  form <- expr
-  return $ List [Symbol "quote", form]
-
-unquote = do
-  char '~'
-  form <- expr
-  return $ List [Symbol "unquote", form]
 
 
 {- Whitespace -}
@@ -89,21 +77,30 @@ lambda = do
 
 {- Expression -}
 expr :: Parser LispVal
-expr = lambda <|> symbol <|> number <|> string <|> list <|> quote <|> unquote
+expr = lambda <|> symbol <|> number <|> string' <|> list
 
 
 {- Parsing -}
-exprSurroundedByWhitespace = do
+readTableParser :: [(String, String)] -> Parser LispVal
+readTableParser pairs =
+  foldl1 (<|>) $ map makeParser pairs
+  where makeParser (s, sym) = do
+          string s
+          e <- expr
+          return $ List [Symbol sym, e]
+
+
+exprSurroundedByWhitespace readtable = do
   skipMany space
-  e <- expr
+  e <- expr <|>readTableParser readtable
   skipMany space
   return e
 
-readOne :: String -> IO LispVal
-readOne = parseSyntaxError exprSurroundedByWhitespace
+readOne :: [(String, String)] -> String -> IO LispVal
+readOne readtable = parseSyntaxError (exprSurroundedByWhitespace readtable)
 
-readMany :: String -> IO [LispVal]
-readMany = parseSyntaxError (many exprSurroundedByWhitespace)
+readMany :: [(String, String)] -> String -> IO [LispVal]
+readMany readtable = parseSyntaxError (many (exprSurroundedByWhitespace readtable))
 
 parseSyntaxError :: Parser a -> String -> IO a
 parseSyntaxError parser code =
