@@ -27,10 +27,15 @@ eval env val =
 
     List (func : args) -> do
       evaluatedFunc <- eval env func
-      if isMacro evaluatedFunc then
-        apply env evaluatedFunc args >>= eval env
-      else
-        evalMany env args >>= apply env evaluatedFunc
+      let macroEval = apply env evaluatedFunc args >>= eval env
+          normalEval = evalMany env args >>= apply env evaluatedFunc
+      case evaluatedFunc of
+        PrimitiveFunc {isMacro = True} -> macroEval
+        Func {isMacro' = True}         -> macroEval
+        PrimitiveFunc {}               -> normalEval
+        Func {}                        -> normalEval
+        _                              -> return $ List (func : args)--FIXME
+
 
     _ ->
       return val
@@ -60,14 +65,14 @@ withCatch action =
 
 {- Apply -}
 apply :: Env -> LispVal -> [LispVal] -> IO LispVal
-apply env PrimitiveFunc { purity = p } args =
+apply env (PrimitiveFunc { purity = p }) args =
   case p of
     Pure func ->
       return $ func args
     Impure func ->
       func env args
 
-apply env (Func isMacro params varargs body closure) args = do
+apply env (Func _ params varargs body closure) args = do
   envWithArgs <- bindVars closure $ zipParamsArgs params varargs args
   evalBody envWithArgs body
 

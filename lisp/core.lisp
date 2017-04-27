@@ -48,7 +48,7 @@
     (cons (func x) acc)))
 
 (define (map func list)
-  (reverse (reduce (mapping func) '() list)))
+  (reduce (mapping func) '() list))
 
 (define (list* . items)
   (reduce (flip cons)
@@ -68,15 +68,16 @@
 
 
 (define (binding-vars bindings)
-  (map first (pairs bindings)))
+  (map first bindings))
 
 (define (binding-vals bindings)
-  (map second (pairs bindings)))
+  (map second bindings))
 
 
-(define-syntax (let bindings . body)
-  (list* (list* 'lambda (binding-vars bindings) body) 
-         (binding-vals bindings)))
+
+
+(define (let bindings . body)
+  (map first bindings))
 
 
 (define (do . forms)
@@ -91,9 +92,9 @@
   (reduce wrap-if 'nil (reverse (pairs clauses))))
 
 (define-syntax (trace form)
-  '(let ((result (eval form)))
-     (print (string-append form " => " result))
-     result))
+  '(let (result ~form)
+      (print "~form => ~result")
+      result))
 
 
 (define (dbg-test x)

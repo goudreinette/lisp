@@ -11,11 +11,15 @@ type Env = IORef [(String, IORef LispVal)]
 
 
 -- Error
+type Expected = LispVal
+type Got = LispVal
+
 data LispError = UnboundVar String
                | SyntaxError ParseError
                | BadSpecialForm LispVal
                | NumArgs Integer [LispVal]
-               | TypeMismatch LispVal
+               | TypeMismatch Expected Got
+               | NotAFunction LispVal
                | Default String
               deriving (Typeable)
 
@@ -28,6 +32,8 @@ instance Show LispError where
     "Syntax Error: " ++ show parseError
   show (BadSpecialForm specialForm) =
     "Unrecognized special form: " ++ show specialForm
+  show (NotAFunction val) =
+    "Not a function: " ++ show val
 
 
 -- Val
@@ -42,11 +48,11 @@ data LispVal = Symbol String
              | Bool Bool
              | Nil
              | PrimitiveFunc { isMacro :: Bool, purity :: Purity }
-             | Func { isMacro :: Bool,
-                      params  :: [String],
-                      varargs :: Bool,
-                      body    :: [LispVal],
-                      closure :: Env }
+             | Func { isMacro' :: Bool,
+                      params   :: [String],
+                      varargs  :: Bool,
+                      body     :: [LispVal],
+                      closure  :: Env }
 
 instance Eq LispVal where
   Symbol a == Symbol b =
