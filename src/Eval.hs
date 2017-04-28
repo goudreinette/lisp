@@ -26,15 +26,11 @@ eval env val =
                   return form
 
     List (func : args) -> do
-      evaluatedFunc <- eval env func
-      let macroEval = apply env evaluatedFunc args >>= eval env
-          normalEval = evalMany env args >>= apply env evaluatedFunc
-      case evaluatedFunc of
-        PrimitiveFunc {isMacro = True} -> macroEval
-        Func {isMacro' = True}         -> macroEval
-        PrimitiveFunc {}               -> normalEval
-        Func {}                        -> normalEval
-        _                              -> return $ List (func : args)--FIXME
+      (Fn isMacro funcType) <- eval env func
+      if isMacro then
+        apply env funcType args >>= eval env
+      else
+        evalMany env args >>= apply env funcType
 
 
     _ ->
@@ -64,17 +60,20 @@ withCatch action =
 
 
 {- Apply -}
-apply :: Env -> LispVal -> [LispVal] -> IO LispVal
-apply env (PrimitiveFunc { purity = p }) args =
+apply :: Env -> FuncType -> [LispVal] -> IO LispVal
+apply env PrimitiveFunc { purity = p } args =
   case p of
     Pure func ->
       return $ func args
     Impure func ->
       func env args
 
-apply env (Func _ params varargs body closure) args = do
-  envWithArgs <- bindVars closure $ zipParamsArgs params varargs args
-  evalBody envWithArgs body
+apply env (Func params varargs body closure) args =
+  if length params /= length args && not varargs then
+    throw $ NumArgs (length params) (length args)
+  else do
+    envWithArgs <- bindVars closure $ zipParamsArgs params varargs args
+    evalBody envWithArgs body
 
 zipParamsArgs :: [String] -> Bool -> [LispVal] -> [(String, LispVal)]
 zipParamsArgs params varargs args =
@@ -91,7 +90,7 @@ zipParamsArgs params varargs args =
 {- Fn -}
 makeFn :: Bool -> [LispVal] -> [LispVal] -> Env -> IO LispVal
 makeFn isMacro params body env =
-  return $ Func isMacro stringParams varargs body env
+  return $ Fn isMacro $ Func stringParams varargs body env
   where stringParams = filter (/= ".") $ map extractString params
         extractString (Symbol s) = s
         varargs = case drop (length params - 2) params of

@@ -17,7 +17,7 @@ type Got = LispVal
 data LispError = UnboundVar String
                | SyntaxError ParseError
                | BadSpecialForm LispVal
-               | NumArgs Integer [LispVal]
+               | NumArgs Int Int
                | TypeMismatch Expected Got
                | NotAFunction LispVal
                | Default String
@@ -34,12 +34,21 @@ instance Show LispError where
     "Unrecognized special form: " ++ show specialForm
   show (NotAFunction val) =
     "Not a function: " ++ show val
+  show (NumArgs expected vals) =
+    "Wrong number of arguments: expected " ++ show expected ++ ", got " ++ show vals
 
 
 -- Val
+type IsMacro = Bool
+
 data Purity = Pure ([LispVal] -> LispVal)
             | Impure (Env -> [LispVal] -> IO LispVal)
 
+data FuncType = PrimitiveFunc {purity :: Purity}
+              | Func { params  :: [String],
+                       varargs :: Bool,
+                       body    :: [LispVal],
+                       closure :: Env }
 
 data LispVal = Symbol String
              | List [LispVal]
@@ -47,12 +56,7 @@ data LispVal = Symbol String
              | String String
              | Bool Bool
              | Nil
-             | PrimitiveFunc { isMacro :: Bool, purity :: Purity }
-             | Func { isMacro' :: Bool,
-                      params   :: [String],
-                      varargs  :: Bool,
-                      body     :: [LispVal],
-                      closure  :: Env }
+             | Fn IsMacro FuncType
 
 instance Eq LispVal where
   Symbol a == Symbol b =
@@ -79,9 +83,13 @@ instance Show LispVal where
       Bool True              -> "true"
       Bool False             -> "false"
       Nil                    -> "nil"
-      PrimitiveFunc { isMacro = isMacro }      -> "<primitive " ++ (if isMacro then "macro" else "function") ++ ">"
-      Func {params = params, varargs = varargs, body = body} ->
-        "(lambda " ++ showParams params varargs ++ " " ++ showListContents body  ++ ")"
+      Fn isMacro funcType ->
+        case funcType of
+          PrimitiveFunc purity ->
+            "<primitive " ++ (if isMacro then "macro" else "function") ++ ">"
+
+          Func {params = params, varargs = varargs, body = body} ->
+            "(lambda " ++ showParams params varargs ++ " " ++ showListContents body  ++ ")"
 
 
 showListContents =

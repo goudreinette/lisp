@@ -37,18 +37,20 @@
             (rest (rest remainder)))))
   (iter () list))
 
+(define (reduce f init seq) 
+  (if (empty? seq) 
+      init 
+      (reduce f (f init (first seq)) 
+                (rest seq)))) 
 
-(define (reduce func acc list)
-  (if (empty? list)
-    acc
-    (reduce func (func acc (first list)) (rest list))))
+
 
 (define (mapping func)
   (lambda (acc x)
     (cons (func x) acc)))
 
 (define (map func list)
-  (reduce (mapping func) '() list))
+  (reverse (reduce (mapping func) '() list)))
 
 (define (list* . items)
   (reduce (flip cons)
@@ -66,14 +68,11 @@
      'nil))
 
 
-
 (define (binding-vars bindings)
-  (map first bindings))
+  (map first (pairs bindings)))
 
 (define (binding-vals bindings)
-  (map second bindings))
-
-
+  (map second (pairs bindings)))
 
 
 (define (let bindings . body)
