@@ -25,12 +25,12 @@ eval env val =
                 _ ->
                   return form
 
-    List (func : args) -> do
-      (Fn isMacro funcType) <- eval env func
-      if isMacro then
-        apply env funcType args >>= eval env
+    List (fsym : args) -> do
+      fn <- eval env fsym
+      if isMacro fn then
+        apply env fn args >>= eval env
       else
-        evalMany env args >>= apply env funcType
+        evalMany env args >>= apply env fn
 
 
     _ ->
@@ -61,14 +61,14 @@ withCatch action =
 
 {- Apply -}
 apply :: Env -> FuncType -> [LispVal] -> IO LispVal
-apply env PrimitiveFunc { purity = p } args =
+apply env Primitive { purity = p } args =
   case p of
     Pure func ->
       return $ func args
     Impure func ->
       func env args
 
-apply env (Func params varargs body closure) args =
+apply env (Lisp params varargs body closure) args =
   if length params /= length args && not varargs then
     throw $ NumArgs (length params) (length args)
   else do

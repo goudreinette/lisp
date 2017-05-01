@@ -1,4 +1,4 @@
-module Parse (readOne, readMany, expr, parse) where
+module Parse (readOne, readMany) where
 
 import           Control.Applicative.Alternative (asum)
 import           Control.Exception
@@ -38,7 +38,8 @@ expr readtable =
 
         {- Strings -}
         literalString =
-          String <$> many1 (noneOf ('\"' : concatMap fst readtable))
+          String <$> many1 (noneOf ('\"' : readtableKeys))
+          where readtableKeys = concatMap fst readtable
 
         string' = do
           char '"'
