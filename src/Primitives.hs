@@ -40,7 +40,9 @@ impurePrimitives =
     ("unquote", eval'),
     ("env", env'),
     ("debug", debug),
-    ("print", print')]
+    ("print", print'),
+    ("slurp", slurp),
+    ("spit", spit)]
 
 impurePrimitiveMacros =
   wrapPrimitives True Impure
@@ -97,6 +99,14 @@ if_ env [pred, conseq, alt] = do
   case result of
     Bool False -> eval env alt
     _          -> eval env conseq
+
+-- IO primitives
+slurp _ [String s] =
+  String <$> readFile s
+
+spit _ [String f, String s] = do
+  writeFile f s
+  return Nil
 
 
 -- Boolean
