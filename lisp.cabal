@@ -23,4 +23,5 @@ executable lisp
                        parsec,
                        mtl,
                        haskeline-repl,
-                       flow
+                       flow,
+                       monadplus
