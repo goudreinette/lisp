@@ -36,6 +36,7 @@ purePrimitives =
 impurePrimitives =
   wrapPrimitives False Impure
    [("read", read'),
+    ("read-many", readMany'),
     ("eval", eval'),
     ("unquote", eval'),
     ("env", env'),
@@ -46,8 +47,7 @@ impurePrimitives =
 
 impurePrimitiveMacros =
   wrapPrimitives True Impure
-    [("require", require),
-     ("define", define),
+    [("define", define),
      ("define-syntax", defineSyntax),
      ("lambda", lambda),
      ("if", if_)]
@@ -61,6 +61,10 @@ wrapPrimitives macro c =
 read' env [String s] = do
   readtable <- getReadtable env
   readOne readtable s
+
+readMany' env [String s] = do
+  readtable <- getReadtable env
+  List <$> readMany readtable s
 
 eval' env (x:_) =
   eval env x
@@ -78,10 +82,6 @@ print' _ [form] = do
   return Nil
 
 -- Impure Macro's
-require env [Symbol filepath] = do
-  evalFile env (filepath ++ ".lisp")
-  return Nil
-
 define env [Symbol var, form] =
   eval env form >>= defineVar env var
 

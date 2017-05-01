@@ -1,6 +1,7 @@
 (define a 10)
 
 
+
 (define (inc x)
   (+ 1 x))
 
@@ -94,6 +95,9 @@
   '(let (result ~form)
       (print "~form => ~result")
       result))
+
+(define (require path)
+  (map eval (read-many (slurp path))))
 
 
 (define (dbg-test x)
