@@ -52,7 +52,7 @@ impurePrimitiveMacros =
 
 -- Wrap
 wrapPrimitives macro c =
-  map (fmap (Fn macro . PrimitiveFunc . c))
+  map $ fmap  $ Fn macro . Primitive . c
 
 
 -- Impure Functions

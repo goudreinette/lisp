@@ -26,11 +26,11 @@ eval env val =
                   return form
 
     List (fsym : args) -> do
-      fn <- eval env fsym
-      if isMacro fn then
-        apply env fn args >>= eval env
+      f <- eval env fsym
+      if isMacro f then
+        apply env (fn f) args >>= eval env
       else
-        evalMany env args >>= apply env fn
+        evalMany env args >>= apply env (fn f)
 
 
     _ ->
@@ -60,7 +60,7 @@ withCatch action =
 
 
 {- Apply -}
-apply :: Env -> FuncType -> [LispVal] -> IO LispVal
+apply :: Env -> Fn -> [LispVal] -> IO LispVal
 apply env Primitive { purity = p } args =
   case p of
     Pure func ->
@@ -90,7 +90,7 @@ zipParamsArgs params varargs args =
 {- Fn -}
 makeFn :: Bool -> [LispVal] -> [LispVal] -> Env -> IO LispVal
 makeFn isMacro params body env =
-  return $ Fn isMacro $ Func stringParams varargs body env
+  return $ Fn isMacro $ Lisp stringParams varargs body env
   where stringParams = filter (/= ".") $ map extractString params
         extractString (Symbol s) = s
         varargs = case drop (length params - 2) params of
