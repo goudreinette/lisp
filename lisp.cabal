@@ -24,4 +24,8 @@ executable lisp
                        mtl,
                        haskeline-repl,
                        flow,
-                       monadplus
+                       monadplus,
+                       uri,
+                       lens,
+                       wreq,
+                       tostring

@@ -1,11 +1,15 @@
 module Primitives where
 
+import           Control.Lens         ((<&>), (^.))
 import           Control.Monad.Trans
+import           Data.String.ToString
 import           Env
 import           Eval
 import           Flow
+import           Network.Wreq
 import           Parse
 import           System.Console.Repl
+import           Text.URI
 import           Types
 
 
@@ -102,7 +106,9 @@ if_ env [pred, conseq, alt] = do
 
 -- IO primitives
 slurp _ [String s] =
-  String <$> readFile s
+  String <$> case parseURI s >>= uriScheme of
+    Just _ -> get s <&> (^. responseBody) <&> toString
+    _      -> readFile s
 
 spit _ [String f, String s] = do
   writeFile f s
