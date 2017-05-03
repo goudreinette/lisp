@@ -28,4 +28,5 @@ executable lisp
                        uri,
                        lens,
                        wreq,
-                       tostring
+                       tostring,
+                       optparse-applicative
