@@ -1,6 +1,7 @@
 module Eval where
 
 import           Control.Exception
+import           Control.Monad       (join, when)
 import           Env
 import           Parse
 import           System.Console.Repl
