@@ -1,11 +1,9 @@
 module Env where
 
 import           Control.Exception
-import           Control.Lens        ((<&>))
-import           Control.Monad.Trans
+import           Control.Lens      ((&), (<&>))
 import           Data.IORef
 import           Data.Maybe
-import           Data.Typeable
 import           Types
 
 newEnv :: [(String, LispVal)] -> IO Env
@@ -22,15 +20,16 @@ isBound :: Env -> String -> IO Bool
 isBound envRef var =
   readIORef envRef <&> lookup var <&> isJust
 
-
-setVar :: Env -> String -> LispVal -> IO LispVal
-setVar envRef var value = do
+withVar :: Env -> String -> (IORef LispVal -> IO a) -> IO a
+withVar envRef var f = do
   env <-  readIORef envRef
-  maybe (throw $ UnboundVar var)
-        (`writeIORef` value)
-        (lookup var env)
-  return value
+  case lookup var env of
+    Just val -> f val
+    _        -> throw $ UnboundVar var
 
+getVar :: Env -> String -> IO LispVal
+getVar envRef var =
+  withVar envRef var readIORef
 
 getVars :: Env -> IO [(String, LispVal)]
 getVars envRef = do
@@ -39,12 +38,13 @@ getVars envRef = do
   vals <- traverse (getVar envRef) vars
   return $ zip vars vals
 
-getVar :: Env -> String -> IO LispVal
-getVar envRef var = do
-  env <-  readIORef envRef
-  maybe (throw $ UnboundVar var)
-        readIORef
-        (lookup var env)
+
+setVar :: Env -> String -> LispVal -> IO LispVal
+setVar envRef var value = do
+  withVar envRef var (`writeIORef` value)
+  return value
+
+
 
 defineVar :: Env -> String -> LispVal -> IO LispVal
 defineVar envRef var value = do
