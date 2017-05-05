@@ -7,7 +7,9 @@ import           Data.Maybe
 import           Types
 
 newEnv :: [(String, LispVal)] -> IO Env
-newEnv vars = newIORef [] >>= \env -> bindVars env vars
+newEnv vars = do
+  env <- newIORef []
+  bindVars env vars
 
 getReadtable :: Env -> IO [(String, String)]
 getReadtable env = do
@@ -64,3 +66,4 @@ bindVars envRef bindings = readIORef envRef >>= extendEnv  >>= newIORef
      where extendEnv env = traverse addBinding bindings <&> (++ env)
            addBinding (var, value) = do ref <- newIORef value
                                         return (var, ref)
+
