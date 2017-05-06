@@ -1,3 +1,3 @@
 # Lisp
 
-The minimal template
+The minimal getting started template
