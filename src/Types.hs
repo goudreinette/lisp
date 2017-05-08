@@ -1,27 +1,39 @@
 module Types where
 
 import           Control.Exception
+import           Control.Monad.State.Strict
 import           Data.IORef
+import           Data.Stack
 import           Data.Typeable
 import           Text.ParserCombinators.Parsec (ParseError)
 
+-- Callstack
+data Callframe = Callframe FnName Arguments
+type Callstack = Stack Callframe
+type CallstackIO a = StateT Callstack IO a
 
 -- Env
 type Env = IORef [(String, IORef LispVal)]
 
 
 -- Error
+throwWithStack :: LispError -> CallstackIO a
+throwWithStack e =
+  liftIO $ throw e
+
 type Expected = LispVal
 type Got = LispVal
 
+data LispErrorWithStack = LispErrorWithStack LispError Callstack
+
+
 data LispError = UnboundVar String
                | SyntaxError ParseError
-               | BadSpecialForm LispVal
                | NumArgs Int Int
                | TypeMismatch Expected Got
-               | NotAFunction LispVal
                | Default String
               deriving (Typeable)
+
 
 instance Exception LispError
 
@@ -30,23 +42,32 @@ instance Show LispError where
     "Unbound Var: " ++ var
   show (SyntaxError parseError) =
     "Syntax Error: " ++ show parseError
-  show (BadSpecialForm specialForm) =
-    "Unrecognized special form: " ++ show specialForm
-  show (NotAFunction val) =
-    "Not a function: " ++ show val
   show (NumArgs expected vals) =
     "Wrong number of arguments: expected " ++ show expected ++ ", got " ++ show vals
 
 
 -- Val
+type Arguments = [LispVal]
+
+data FnName = Anonymous
+            | Named String deriving (Show)
+
 data Purity = Pure ([LispVal] -> LispVal)
-            | Impure (Env -> [LispVal] -> IO LispVal)
+            | Impure (Env -> [LispVal] -> CallstackIO LispVal)
 
 data Fn = Primitive {purity :: Purity}
-        | Lisp { params  :: [String],
+        | Lisp { name    :: FnName,
+                 params  :: [String],
                  varargs :: Bool,
                  body    :: [LispVal],
                  closure :: Env }
+
+
+instance Show Callframe where
+  show (Callframe name args) =
+    show name ++ " - " ++ show args
+
+
 
 data LispVal = Symbol String
              | List [LispVal]
@@ -55,9 +76,9 @@ data LispVal = Symbol String
              | Bool Bool
              | Nil
              | Fn { isMacro :: Bool,
-                    name    :: String,
                     fn      :: Fn }
 
+-- TODO: unpack
 
 instance Eq LispVal where
   Symbol a == Symbol b =
@@ -89,8 +110,8 @@ instance Show LispVal where
           Primitive purity ->
             "<primitive " ++ (if isMacro then "macro" else "function") ++ ">"
 
-          Lisp {params = params, varargs = varargs, body = body} ->
-            "(lambda " ++ showParams params varargs ++ " " ++ showListContents body  ++ ")"
+          Lisp {name = name, params = params, varargs = varargs, body = body} ->
+            "(lambda " ++ showName name ++ " " ++ showParams params varargs ++ " " ++ showListContents body  ++ ")"
 
 
 showListContents =
@@ -105,4 +126,9 @@ showParams params varargs
 
   | otherwise =
     "(" ++ unwords params ++ ")"
+
+showName name =
+  case name of
+    Named s   -> s
+    Anonymous -> ""
 

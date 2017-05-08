@@ -1,15 +1,29 @@
 module Eval where
 
 import           Control.Exception
-import           Control.Monad       (join, when)
+import           Control.Monad              (join, when)
+import           Control.Monad.State.Strict
+import           Control.Monad.Trans
+import           Data.Stack
 import           Env
 import           Parse
 import           System.Console.Repl
 import           Types
 
+push :: FnName -> Arguments -> CallstackIO ()
+push f args =
+  modify (`stackPush` Callframe f args)
+
+pop :: CallstackIO ()
+pop = do
+  old <- get
+  put $ case stackPop old of
+    Just (new, _) -> new
+    _             -> old
+
 
 {- Eval -}
-eval :: Env -> LispVal -> IO LispVal
+eval :: Env -> LispVal -> CallstackIO LispVal
 eval env val =
   case val of
     Symbol s ->
@@ -28,11 +42,18 @@ eval env val =
 
     List (fsym : args) -> do
       f <- eval env fsym
-      if isMacro f then
-        apply env (fn f) args >>= eval env
-      else
-        evalMany env args >>= apply env (fn f)
-
+      let (Symbol s) = fsym
+      push (Named s) args
+      stack <- get
+      liftIO $ print ( "-> " ++ show stack)
+      result <- if isMacro f then
+                     apply env (fn f) args >>= eval env
+                   else
+                     evalMany env args >>= apply env (fn f)
+      stack <- get
+      liftIO $ print ( "<- " ++ show stack)
+      pop
+      return result
 
     _ ->
       return val
@@ -43,25 +64,29 @@ evalBody env body = last <$> evalMany env body
 
 
 evalString, evalFile :: Env -> String -> IO ()
-evalString env string = do
-  readtable <- getReadtable env
-  withCatch $
-    readOne readtable string >>= eval env >>= print
+evalString =
+  evalWithCatch action
+  where action env string = do
+          readtable <- getReadtable env
+          readOne readtable string >>= eval env >>= liftIO . print
 
-evalFile env file = do
-  readtable <- getReadtable env
-  withCatch $ do
-     readFile file >>= readMany readtable >>= evalMany env
-     return ()
+evalFile =
+  evalWithCatch action
+  where action env file = do
+          readtable <- getReadtable env
+          liftIO (readFile file) >>= readMany readtable >>= evalMany env
+          return ()
 
-withCatch action =
+evalWithCatch f env x = do
+  let stack = stackNew
+      action = evalStateT (f env x) stack
   catch action (printError :: LispError -> IO ())
 
 
 
 
 {- Apply -}
-apply :: Env -> Fn -> [LispVal] -> IO LispVal
+apply :: Env -> Fn -> [LispVal] -> CallstackIO LispVal
 apply env Primitive { purity = p } args =
   case p of
     Pure func ->
@@ -69,7 +94,7 @@ apply env Primitive { purity = p } args =
     Impure func ->
       func env args
 
-apply env (Lisp params varargs body closure) args =
+apply env (Lisp name params varargs body closure) args =
   if length params /= length args && not varargs then
     throw $ NumArgs (length params) (length args)
   else do
@@ -89,14 +114,13 @@ zipParamsArgs params varargs args =
 
 
 {- Fn -}
-makeFn :: Bool -> String -> [LispVal] -> [LispVal] -> Env -> IO LispVal
+makeFn :: Bool -> FnName -> [LispVal] -> [LispVal] -> Env -> LispVal
 makeFn isMacro name params body env =
-  return $ Fn isMacro name $ Lisp stringParams varargs body env
+  Fn isMacro $ Lisp name stringParams varargs body env
   where stringParams = filter (/= ".") $ map extractString params
         extractString (Symbol s) = s
         varargs = case drop (length params - 2) params of
           [Symbol ".", Symbol vararg] -> True
           _                           -> False
 
-makeFunc = makeFn False
-makeMacro = makeFn True
+

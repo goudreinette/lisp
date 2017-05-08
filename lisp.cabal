@@ -29,4 +29,5 @@ executable lisp
                        lens,
                        wreq,
                        tostring,
-                       optparse-applicative
+                       optparse-applicative,
+                       Stack

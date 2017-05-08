@@ -84,13 +84,13 @@ exprSurroundedByWhitespace readtable = do
   skipMany space
   return e
 
-readOne :: ReadTable -> String -> IO LispVal
+readOne :: ReadTable -> String -> CallstackIO LispVal
 readOne readtable = parseSyntaxError (exprSurroundedByWhitespace readtable)
 
-readMany :: ReadTable -> String -> IO [LispVal]
+readMany :: ReadTable -> String -> CallstackIO [LispVal]
 readMany readtable = parseSyntaxError (many (exprSurroundedByWhitespace readtable))
 
-parseSyntaxError :: Parser a -> String -> IO a
+parseSyntaxError :: Parser a -> String -> CallstackIO a
 parseSyntaxError parser code =
   either (throw . SyntaxError)
          return

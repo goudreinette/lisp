@@ -1,5 +1,6 @@
 module Main where
 
+import           Control.Exception
 import           Control.Monad       (join, when)
 import           Data.Monoid         ((<>))
 import           Env
@@ -7,6 +8,8 @@ import           Eval
 import           Options.Applicative
 import           Primitives
 import           System.Console.Repl
+import           Types
+
 
 
 
@@ -28,3 +31,4 @@ work file i = do
   when i $ interactive globalEnv
   where interactive env =
           repl "lisp=> " $ evalString env
+

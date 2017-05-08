@@ -1,6 +1,6 @@
 module Primitives where
 
-import           Control.Lens         ((<&>), (^.))
+import           Control.Lens         ((&), (<&>), (^.))
 import           Control.Monad.Trans
 import           Data.String.ToString
 import           Env
@@ -58,7 +58,7 @@ impurePrimitiveMacros =
 
 -- Wrap
 wrapPrimitives macro c =
-  map $ fmap  $ Fn macro "<primitive>" . Primitive . c
+  map $ fmap  $ Fn macro . Primitive . c
 
 
 -- Impure Functions
@@ -78,11 +78,11 @@ env' env [] =
   where toPair (var, val) = List [Symbol var, val]
 
 debug env [] = do
-  repl "debug=> " $ evalString env
+  liftIO $ repl "debug=> " $ evalString env
   return Nil
 
 print' _ [form] = do
-  print form
+  liftIO $ print form
   return Nil
 
 -- Impure Macro's
@@ -91,10 +91,10 @@ define isMacro env args =
     [Symbol var, form] ->
       eval env form >>= defineVar env var
     List (Symbol var : params) : body ->
-      makeFn isMacro var params body env >>= defineVar env var
+      makeFn isMacro (Named var) params body env & defineVar env var
 
 lambda env (List params : body) =
-  makeFn False "<anonymous>" params body env
+  return $ makeFn False Anonymous params body env
 
 if_ env [pred, conseq, alt] = do
   result <- eval env pred
@@ -104,12 +104,15 @@ if_ env [pred, conseq, alt] = do
 
 -- IO primitives
 slurp _ [String s] =
-  String <$> case parseURI s >>= uriScheme of
-    Just _ -> get s <&> (^. responseBody) <&> toString
-    _      -> readFile s
+  String <$> liftIO result
+  where result =
+          case parseURI s >>= uriScheme of
+            Just _ -> get s <&> (^. responseBody) <&> toString
+            _      -> readFile s
+
 
 spit _ [String f, String s] = do
-  writeFile f s
+  liftIO $ writeFile f s
   return Nil
 
 
