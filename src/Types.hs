@@ -55,7 +55,8 @@ data LispVal = Symbol String
              | Bool Bool
              | Nil
              | Fn { isMacro :: Bool,
-                    fn      :: Fn}
+                    name    :: String,
+                    fn      :: Fn }
 
 
 instance Eq LispVal where

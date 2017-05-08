@@ -51,14 +51,14 @@ impurePrimitives =
 
 impurePrimitiveMacros =
   wrapPrimitives True Impure
-    [("define", define),
-     ("define-syntax", defineSyntax),
+    [("define", define False),
+     ("define-syntax", define True),
      ("lambda", lambda),
      ("if", if_)]
 
 -- Wrap
 wrapPrimitives macro c =
-  map $ fmap  $ Fn macro . Primitive . c
+  map $ fmap  $ Fn macro "<primitive>" . Primitive . c
 
 
 -- Impure Functions
@@ -86,17 +86,15 @@ print' _ [form] = do
   return Nil
 
 -- Impure Macro's
-define env [Symbol var, form] =
-  eval env form >>= defineVar env var
-
-define env (List (Symbol var : params) : body) =
-  makeFunc params body env >>= defineVar env var
-
-defineSyntax env (List (Symbol var : params) : body) =
-  makeMacro params body env >>= defineVar env var
+define isMacro env args =
+  case args of
+    [Symbol var, form] ->
+      eval env form >>= defineVar env var
+    List (Symbol var : params) : body ->
+      makeFn isMacro var params body env >>= defineVar env var
 
 lambda env (List params : body) =
-  makeFunc params body env
+  makeFn False "<anonymous>" params body env
 
 if_ env [pred, conseq, alt] = do
   result <- eval env pred

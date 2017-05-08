@@ -89,9 +89,9 @@ zipParamsArgs params varargs args =
 
 
 {- Fn -}
-makeFn :: Bool -> [LispVal] -> [LispVal] -> Env -> IO LispVal
-makeFn isMacro params body env =
-  return $ Fn isMacro $ Lisp stringParams varargs body env
+makeFn :: Bool -> String -> [LispVal] -> [LispVal] -> Env -> IO LispVal
+makeFn isMacro name params body env =
+  return $ Fn isMacro name $ Lisp stringParams varargs body env
   where stringParams = filter (/= ".") $ map extractString params
         extractString (Symbol s) = s
         varargs = case drop (length params - 2) params of
