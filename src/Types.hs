@@ -15,7 +15,8 @@ type CallstackIO a = StateT Callstack IO a
 
 instance Show Callframe where
   show (Callframe FnRecord {name = name} args) =
-    "(" ++ showName name ++ " " ++ showListContents args ++ ")"
+    "(" ++ showName name ++ " "
+        ++ showListContents args ++ ")"
 
 
 
@@ -57,7 +58,8 @@ instance Show ErrorType where
 
 instance Show LispError where
   show (LispError errType stack) =
-    show errType ++ "\n" ++ unlines (map show (reverse stack))
+    show errType ++ "\n"
+    ++ unlines (map show (reverse stack))
 
 
 
@@ -91,6 +93,8 @@ data LispVal = Symbol String
              | Fn Fn
 
 -- TODO: unpack
+
+
 
 instance Eq LispVal where
   Symbol a == Symbol b =

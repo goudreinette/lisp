@@ -5,7 +5,6 @@ import           Control.Monad.Trans
 import           Data.String.ToString
 import           Env
 import           Eval
-import           Flow
 import           Network.Wreq
 import           Parse
 import           System.Console.Repl

@@ -7,8 +7,8 @@ import           Parse
 import           System.Console.Repl
 import           Types
 
-push :: LispVal -> Arguments -> CallstackIO ()
-push (Fn f) args =
+push :: Fn -> Arguments -> CallstackIO ()
+push f args =
   modify addFrame
   where addFrame xs =
           Callframe f args : xs
@@ -41,13 +41,12 @@ eval env val =
                   return form
 
     List (fsym : args) -> do
-      f <- eval env fsym
+      (Fn f) <- eval env fsym
       push f args
-      result <- case f of
-                  Fn FnRecord {isMacro = True, fnType = fnType} ->
-                    apply env fnType args >>= eval env
-                  Fn FnRecord {isMacro = False, fnType = fnType} ->
-                    evalMany env args >>= apply env fnType
+      result <- if isMacro f then
+                  apply env (fnType f) args >>= eval env
+                else
+                  evalMany env args >>= apply env (fnType f)
       pop
       return result
 
@@ -75,8 +74,7 @@ evalFile =
 
 
 evalWithCatch f env x = do
-  let stack = []
-      action = evalStateT (f env x) stack
+  let action = evalStateT (f env x) []
   catch action (printError :: LispError -> IO ())
 
 printStack :: String -> CallstackIO ()
