@@ -89,8 +89,9 @@ evalWithCatch f env x = do
 printStack :: String -> CallstackIO ()
 printStack sym = do
   stack <- get
-  liftIO $ print $ sym ++ show (length stack) ++ " " ++unwords (map show stack)
-
+  liftIO $ putStrLn $ sym ++ show (length stack) ++ " " ++ unwords (map show (head' stack))
+  where head' [] = []
+        head' xs = [head xs]
 
 
 {- Apply -}

@@ -34,7 +34,6 @@ type Got = LispVal
 
 
 
-
 data LispError = LispError ErrorType Callstack
   deriving (Typeable)
 
