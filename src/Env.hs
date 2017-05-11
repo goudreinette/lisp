@@ -12,7 +12,7 @@ import           Types
 newEnv :: [(String, LispVal)] -> IO Env
 newEnv vars = do
   e <- newIORef []
-  evalStateT (bindVars e vars) stackNew
+  evalStateT (bindVars e vars) []
 
 getReadtable :: Env -> CallstackIO [(String, String)]
 getReadtable env = do

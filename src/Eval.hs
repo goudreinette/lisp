@@ -12,14 +12,18 @@ import           Types
 
 push :: FnName -> Arguments -> CallstackIO ()
 push f args =
-  modify (`stackPush` Callframe f args)
+  modify addFrame
+  where addFrame xs =
+          Callframe f args : xs
 
 pop :: CallstackIO ()
-pop = do
-  old <- get
-  put $ case stackPop old of
-    Just (new, _) -> new
-    _             -> old
+pop =
+  modify popFrame
+  where popFrame (_:xs) =
+          xs
+        popFrame xs =
+          xs
+
 
 
 {- Eval -}
@@ -44,14 +48,12 @@ eval env val =
       f <- eval env fsym
       let (Symbol s) = fsym
       push (Named s) args
-      stack <- get
-      liftIO $ print ( "-> " ++ show stack)
+      printStack "->"
       result <- if isMacro f then
                      apply env (fn f) args >>= eval env
                    else
                      evalMany env args >>= apply env (fn f)
-      stack <- get
-      liftIO $ print ( "<- " ++ show stack)
+      printStack "<-"
       pop
       return result
 
@@ -77,11 +79,16 @@ evalFile =
           liftIO (readFile file) >>= readMany readtable >>= evalMany env
           return ()
 
-evalWithCatch f env x = do
-  let stack = stackNew
-      action = evalStateT (f env x) stack
-  catch action (printError :: LispError -> IO ())
 
+evalWithCatch f env x = do
+  let stack = []
+      action = evalStateT (f env x) stack
+  catch action (printError :: LispErrorWithStack -> IO ())
+
+printStack :: String -> CallstackIO ()
+printStack sym = do
+  stack <- get
+  liftIO $ print $ sym ++ show (length stack) ++ " " ++unwords (map show stack)
 
 
 
@@ -96,7 +103,7 @@ apply env Primitive { purity = p } args =
 
 apply env (Lisp name params varargs body closure) args =
   if length params /= length args && not varargs then
-    throw $ NumArgs (length params) (length args)
+    throwWithStack $ NumArgs (length params) (length args)
   else do
     envWithArgs <- bindVars closure $ zipParamsArgs params varargs args
     evalBody envWithArgs body

@@ -92,6 +92,6 @@ readMany readtable = parseSyntaxError (many (exprSurroundedByWhitespace readtabl
 
 parseSyntaxError :: Parser a -> String -> CallstackIO a
 parseSyntaxError parser code =
-  either (throw . SyntaxError)
+  either (throwWithStack . SyntaxError)
          return
          (parse parser "lisp" code)

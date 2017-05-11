@@ -1,1 +1,4 @@
 .stack-work/
+.idea/
+.ideaHaskellLib
+lisp.iml

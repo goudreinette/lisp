@@ -3,13 +3,12 @@ module Types where
 import           Control.Exception
 import           Control.Monad.State.Strict
 import           Data.IORef
-import           Data.Stack
 import           Data.Typeable
 import           Text.ParserCombinators.Parsec (ParseError)
 
 -- Callstack
 data Callframe = Callframe FnName Arguments
-type Callstack = Stack Callframe
+type Callstack = [Callframe]
 type CallstackIO a = StateT Callstack IO a
 
 -- Env
@@ -18,14 +17,16 @@ type Env = IORef [(String, IORef LispVal)]
 
 -- Error
 throwWithStack :: LispError -> CallstackIO a
-throwWithStack e =
-  liftIO $ throw e
+throwWithStack e = do
+  stack <- get
+  liftIO $ throw $ LispErrorWithStack e stack
 
 type Expected = LispVal
 type Got = LispVal
 
-data LispErrorWithStack = LispErrorWithStack LispError Callstack
 
+data LispErrorWithStack =
+  LispErrorWithStack LispError Callstack deriving (Typeable)
 
 data LispError = UnboundVar String
                | SyntaxError ParseError
@@ -36,6 +37,7 @@ data LispError = UnboundVar String
 
 
 instance Exception LispError
+instance Exception LispErrorWithStack
 
 instance Show LispError where
   show (UnboundVar var) =
@@ -44,6 +46,11 @@ instance Show LispError where
     "Syntax Error: " ++ show parseError
   show (NumArgs expected vals) =
     "Wrong number of arguments: expected " ++ show expected ++ ", got " ++ show vals
+
+instance Show LispErrorWithStack where
+  show (LispErrorWithStack e s) =
+    show e ++ "\n" ++ unlines (map show s)
+
 
 
 -- Val
@@ -65,7 +72,7 @@ data Fn = Primitive {purity :: Purity}
 
 instance Show Callframe where
   show (Callframe name args) =
-    show name ++ " - " ++ show args
+    "(" ++ showName name ++ " " ++ showListContents args ++ ")"
 
 
 
@@ -111,7 +118,7 @@ instance Show LispVal where
             "<primitive " ++ (if isMacro then "macro" else "function") ++ ">"
 
           Lisp {name = name, params = params, varargs = varargs, body = body} ->
-            "(lambda " ++ showName name ++ " " ++ showParams params varargs ++ " " ++ showListContents body  ++ ")"
+            "(lambda " ++ showParams params varargs ++ " " ++ showListContents body  ++ ")"
 
 
 showListContents =
@@ -130,5 +137,5 @@ showParams params varargs
 showName name =
   case name of
     Named s   -> s
-    Anonymous -> ""
+    Anonymous -> "<anonymous>"
 
