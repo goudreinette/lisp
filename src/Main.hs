@@ -1,34 +1,23 @@
 module Main where
 
-import           Control.Exception
-import           Control.Monad       (join, when)
-import           Data.Monoid         ((<>))
 import           Env
 import           Eval
-import           Options.Applicative
 import           Primitives
 import           System.Console.Repl
-import           Types
+import           System.Environment
 
 
 
-
-
-main = join . customExecParser (prefs showHelpOnError) $
-  info (helper <*> parser)
-  (  fullDesc
-  <> header "Lisp"
-  )
-  where parser :: Parser (IO ())
-        parser = work
-            <$> optional (argument str (metavar "FILE"))
-            <*> switch (long "interactive" <> short 'i' <> help "Launch a repl session")
-
-work :: Maybe FilePath -> Bool -> IO ()
-work file i = do
+main = do
   globalEnv <- newEnv primitives
-  maybe (return ()) (evalFile globalEnv) file
-  when i $ interactive globalEnv
+  args <- getArgs
+  case args of
+    [file, "-i"] -> do
+      evalFile globalEnv file
+      interactive globalEnv
+    [file] ->
+      evalFile globalEnv file
+    [] ->
+      interactive globalEnv
   where interactive env =
           repl "lisp=> " $ evalString env
-

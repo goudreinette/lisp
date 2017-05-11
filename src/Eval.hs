@@ -2,28 +2,24 @@ module Eval where
 
 import           Control.Exception
 import           Control.Monad.State.Strict
-import           Control.Monad.Trans
 import           Env
 import           Parse
 import           System.Console.Repl
 import           Types
 
 push :: LispVal -> Arguments -> CallstackIO ()
-push (Fn f) args = do
+push (Fn f) args =
   modify addFrame
-  printStack "->"
   where addFrame xs =
           Callframe f args : xs
 
 pop :: CallstackIO ()
-pop = do
+pop =
   modify popFrame
-  printStack "<-"
   where popFrame (_:xs) =
           xs
         popFrame xs =
           xs
-
 
 
 {- Eval -}

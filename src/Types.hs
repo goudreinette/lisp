@@ -57,7 +57,7 @@ instance Show ErrorType where
 
 instance Show LispError where
   show (LispError errType stack) =
-    show errType ++ "\n" ++ unlines (map show stack)
+    show errType ++ "\n" ++ unlines (map show (reverse stack))
 
 
 
