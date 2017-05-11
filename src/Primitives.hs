@@ -58,8 +58,8 @@ impurePrimitiveMacros =
 
 -- Wrap
 wrapPrimitives ismacro purity =
-  map (fmap wrap)
-  where wrap f = Fn $ FnRecord Anonymous ismacro $ Primitive $ purity f
+  map wrap
+  where wrap (s, f) = (s, Fn $ FnRecord (Named s) ismacro $ Primitive $ purity f)
 
 
 -- Impure Functions

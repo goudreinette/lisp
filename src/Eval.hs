@@ -8,8 +8,8 @@ import           Parse
 import           System.Console.Repl
 import           Types
 
-push :: FnName -> Arguments -> CallstackIO ()
-push f args = do
+push :: LispVal -> Arguments -> CallstackIO ()
+push (Fn f) args = do
   modify addFrame
   printStack "->"
   where addFrame xs =
@@ -46,8 +46,7 @@ eval env val =
 
     List (fsym : args) -> do
       f <- eval env fsym
-      let (Symbol s) = fsym
-      push (Named s) args
+      push f args
       result <- case f of
                   Fn FnRecord {isMacro = True, fnType = fnType} ->
                     apply env fnType args >>= eval env

@@ -8,13 +8,13 @@ import           Text.ParserCombinators.Parsec (ParseError)
 
 
 {- Callstack -}
-data Callframe = Callframe FnName Arguments
+data Callframe = Callframe Fn Arguments
 type Callstack = [Callframe]
 type CallstackIO a = StateT Callstack IO a
 
 
 instance Show Callframe where
-  show (Callframe name args) =
+  show (Callframe FnRecord {name = name} args) =
     "(" ++ showName name ++ " " ++ showListContents args ++ ")"
 
 
