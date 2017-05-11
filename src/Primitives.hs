@@ -57,8 +57,9 @@ impurePrimitiveMacros =
      ("if", if_)]
 
 -- Wrap
-wrapPrimitives macro c =
-  map $ fmap  $ Fn macro . Primitive . c
+wrapPrimitives ismacro purity =
+  map (fmap wrap)
+  where wrap f = Fn $ FnRecord Anonymous ismacro $ Primitive $ purity f
 
 
 -- Impure Functions

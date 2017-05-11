@@ -6,68 +6,11 @@ import           Data.IORef
 import           Data.Typeable
 import           Text.ParserCombinators.Parsec (ParseError)
 
--- Callstack
+
+{- Callstack -}
 data Callframe = Callframe FnName Arguments
 type Callstack = [Callframe]
 type CallstackIO a = StateT Callstack IO a
-
--- Env
-type Env = IORef [(String, IORef LispVal)]
-
-
--- Error
-throwWithStack :: LispError -> CallstackIO a
-throwWithStack e = do
-  stack <- get
-  liftIO $ throw $ LispErrorWithStack e stack
-
-type Expected = LispVal
-type Got = LispVal
-
-
-data LispErrorWithStack =
-  LispErrorWithStack LispError Callstack deriving (Typeable)
-
-data LispError = UnboundVar String
-               | SyntaxError ParseError
-               | NumArgs Int Int
-               | TypeMismatch Expected Got
-               | Default String
-              deriving (Typeable)
-
-
-instance Exception LispError
-instance Exception LispErrorWithStack
-
-instance Show LispError where
-  show (UnboundVar var) =
-    "Unbound Var: " ++ var
-  show (SyntaxError parseError) =
-    "Syntax Error: " ++ show parseError
-  show (NumArgs expected vals) =
-    "Wrong number of arguments: expected " ++ show expected ++ ", got " ++ show vals
-
-instance Show LispErrorWithStack where
-  show (LispErrorWithStack e s) =
-    show e ++ "\n" ++ unlines (map show s)
-
-
-
--- Val
-type Arguments = [LispVal]
-
-data FnName = Anonymous
-            | Named String deriving (Show)
-
-data Purity = Pure ([LispVal] -> LispVal)
-            | Impure (Env -> [LispVal] -> CallstackIO LispVal)
-
-data Fn = Primitive {purity :: Purity}
-        | Lisp { name    :: FnName,
-                 params  :: [String],
-                 varargs :: Bool,
-                 body    :: [LispVal],
-                 closure :: Env }
 
 
 instance Show Callframe where
@@ -76,14 +19,77 @@ instance Show Callframe where
 
 
 
+{- Env -}
+type Env = IORef [(String, IORef LispVal)]
+
+
+{- Error -}
+throwWithStack :: ErrorType -> CallstackIO a
+throwWithStack e = do
+  stack <- get
+  liftIO $ throw $ LispError e stack
+
+type Expected = LispVal
+type Got = LispVal
+
+
+
+
+data LispError = LispError ErrorType Callstack
+  deriving (Typeable)
+
+data ErrorType = UnboundVar String
+               | SyntaxError ParseError
+               | NumArgs Int Int
+               | TypeMismatch Expected Got
+               | Default String
+               deriving (Typeable)
+
+
+instance Exception LispError
+
+instance Show ErrorType where
+  show (UnboundVar var) =
+    "Unbound Var: " ++ var
+  show (SyntaxError parseError) =
+    "Syntax Error: " ++ show parseError
+  show (NumArgs expected vals) =
+    "Wrong number of arguments: expected " ++ show expected ++ ", got " ++ show vals
+
+instance Show LispError where
+  show (LispError errType stack) =
+    show errType ++ "\n" ++ unlines (map show stack)
+
+
+
+{- Val -}
+type Arguments = [LispVal]
+
+data FnName = Anonymous
+            | Named String
+
+data Purity = Pure ([LispVal] -> LispVal)
+            | Impure (Env -> [LispVal] -> CallstackIO LispVal)
+
+data FnType
+  = Primitive { purity :: Purity }
+  | Lisp { params  :: [String],
+           varargs :: Bool,
+           body    :: [LispVal],
+           closure :: Env }
+
+data Fn = FnRecord { name    :: FnName,
+                     isMacro :: Bool,
+                     fnType  :: FnType }
+
+
 data LispVal = Symbol String
              | List [LispVal]
              | Number Integer
              | String String
              | Bool Bool
              | Nil
-             | Fn { isMacro :: Bool,
-                    fn      :: Fn }
+             | Fn Fn
 
 -- TODO: unpack
 
@@ -102,24 +108,31 @@ instance Eq LispVal where
     False
 
 
+{- Show -}
 instance Show LispVal where
-  show val =
-    case val of
-      Symbol s               -> s
-      List list              -> "(" ++ showListContents list  ++ ")"
-      Number n               -> show n
-      String s               -> "\"" ++ s ++ "\""
-      Bool True              -> "true"
-      Bool False             -> "false"
-      Nil                    -> "nil"
-      Fn {isMacro = isMacro, fn = fn} ->
-        case fn of
-          Primitive purity ->
-            "<primitive " ++ (if isMacro then "macro" else "function") ++ ">"
+  show = showVal
 
-          Lisp {name = name, params = params, varargs = varargs, body = body} ->
-            "(lambda " ++ showParams params varargs ++ " " ++ showListContents body  ++ ")"
 
+showVal :: LispVal -> String
+showVal val =
+  case val of
+  Symbol s   -> s
+  List list  -> "(" ++ showListContents list  ++ ")"
+  Number n   -> show n
+  String s   -> "\"" ++ s ++ "\""
+  Bool True  -> "true"
+  Bool False -> "false"
+  Nil        -> "nil"
+  Fn f       -> showFn f
+
+
+showFn :: Fn -> String
+showFn FnRecord { fnType = fnType, isMacro = isMacro } =
+  case fnType of
+    Primitive {} ->
+      "<primitive " ++ (if isMacro then "macro" else "function") ++ ">"
+    Lisp {params = params, varargs = varargs, body = body} ->
+       "(lambda " ++ showParams params varargs ++ " " ++ showListContents body  ++ ")"
 
 showListContents =
   unwords . map show

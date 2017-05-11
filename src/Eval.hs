@@ -11,14 +11,16 @@ import           System.Console.Repl
 import           Types
 
 push :: FnName -> Arguments -> CallstackIO ()
-push f args =
+push f args = do
   modify addFrame
+  printStack "->"
   where addFrame xs =
           Callframe f args : xs
 
 pop :: CallstackIO ()
-pop =
+pop = do
   modify popFrame
+  printStack "<-"
   where popFrame (_:xs) =
           xs
         popFrame xs =
@@ -48,12 +50,11 @@ eval env val =
       f <- eval env fsym
       let (Symbol s) = fsym
       push (Named s) args
-      printStack "->"
-      result <- if isMacro f then
-                     apply env (fn f) args >>= eval env
-                   else
-                     evalMany env args >>= apply env (fn f)
-      printStack "<-"
+      result <- case f of
+                  Fn FnRecord {isMacro = True, fnType = fnType} ->
+                    apply env fnType args >>= eval env
+                  Fn FnRecord {isMacro = False, fnType = fnType} ->
+                    evalMany env args >>= apply env fnType
       pop
       return result
 
@@ -83,7 +84,7 @@ evalFile =
 evalWithCatch f env x = do
   let stack = []
       action = evalStateT (f env x) stack
-  catch action (printError :: LispErrorWithStack -> IO ())
+  catch action (printError :: LispError -> IO ())
 
 printStack :: String -> CallstackIO ()
 printStack sym = do
@@ -93,7 +94,7 @@ printStack sym = do
 
 
 {- Apply -}
-apply :: Env -> Fn -> [LispVal] -> CallstackIO LispVal
+apply :: Env -> FnType -> [LispVal] -> CallstackIO LispVal
 apply env Primitive { purity = p } args =
   case p of
     Pure func ->
@@ -101,7 +102,7 @@ apply env Primitive { purity = p } args =
     Impure func ->
       func env args
 
-apply env (Lisp name params varargs body closure) args =
+apply env (Lisp params varargs body closure) args =
   if length params /= length args && not varargs then
     throwWithStack $ NumArgs (length params) (length args)
   else do
@@ -123,7 +124,7 @@ zipParamsArgs params varargs args =
 {- Fn -}
 makeFn :: Bool -> FnName -> [LispVal] -> [LispVal] -> Env -> LispVal
 makeFn isMacro name params body env =
-  Fn isMacro $ Lisp name stringParams varargs body env
+  Fn $ FnRecord name isMacro $ Lisp stringParams varargs body env
   where stringParams = filter (/= ".") $ map extractString params
         extractString (Symbol s) = s
         varargs = case drop (length params - 2) params of
