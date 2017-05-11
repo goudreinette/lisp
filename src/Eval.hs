@@ -1,10 +1,8 @@
 module Eval where
 
 import           Control.Exception
-import           Control.Monad              (join, when)
 import           Control.Monad.State.Strict
 import           Control.Monad.Trans
-import           Data.Stack
 import           Env
 import           Parse
 import           System.Console.Repl
