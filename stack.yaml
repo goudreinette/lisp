@@ -4,6 +4,6 @@ packages:
 - '.'
 extra-deps:
 - Stack-0.3.2
-- haskeline-repl-0.3.0.0
+- haskeline-repl-0.4.0.0
 - uri-0.1.6.4
 resolver: lts-8.5
