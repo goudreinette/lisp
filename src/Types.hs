@@ -68,6 +68,7 @@ type Arguments = [LispVal]
 
 data FnName = Anonymous
             | Named String
+            deriving (Show)
 
 data Purity = Pure ([LispVal] -> LispVal)
             | Impure (Env -> [LispVal] -> CallstackIO LispVal)
@@ -79,9 +80,11 @@ data FnType
            body    :: [LispVal],
            closure :: Env }
 
+
 data Fn = FnRecord { name    :: FnName,
                      isMacro :: Bool,
                      fnType  :: FnType }
+          deriving (Show)
 
 
 data LispVal = Symbol String
@@ -91,10 +94,13 @@ data LispVal = Symbol String
              | Bool Bool
              | Nil
              | Fn Fn
+             deriving (Show)
 
 -- TODO: unpack
 
-
+instance Show FnType where
+  show Primitive{} = "Primitive {..}"
+  show Lisp{}      = "Lisp {..}"
 
 instance Eq LispVal where
   Symbol a == Symbol b =
@@ -112,10 +118,6 @@ instance Eq LispVal where
 
 
 {- Show -}
-instance Show LispVal where
-  show = showVal
-
-
 showVal :: LispVal -> String
 showVal val =
   case val of
@@ -138,7 +140,7 @@ showFn FnRecord { fnType = fnType, isMacro = isMacro } =
        "(lambda " ++ showParams params varargs ++ " " ++ showListContents body  ++ ")"
 
 showListContents =
-  unwords . map show
+  unwords . map showVal
 
 showParams params varargs
   | varargs && (length params == 1) =
