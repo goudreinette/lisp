@@ -21,5 +21,5 @@ main = do
     [] ->
       interactive globalEnv
   where interactive env =
-          replWith "lisp=> " (evalString env) commands
+          replWith "lisp=> " (evalWithInfo env) commands
 

@@ -63,7 +63,14 @@ evalString =
   evalWithCatch action
   where action env string = do
           readtable <- getReadtable env
-          readOne readtable string >>= eval env >>= liftIO . print
+          readOne readtable string >>= eval env >>= liftIO . putStrLn . showVal
+
+evalWithInfo =
+  evalWithCatch action
+  where action env string = do
+          readtable <- getReadtable env
+          result <- readOne readtable string >>= eval env
+          liftIO $ putStrLn $ showVal result ++ " : " ++ show result
 
 evalFile =
   evalWithCatch action
