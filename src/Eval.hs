@@ -77,13 +77,6 @@ evalWithCatch f env x = do
   let action = evalStateT (f env x) []
   catch action (printError :: LispError -> IO ())
 
-printStack :: String -> CallstackIO ()
-printStack sym = do
-  stack <- get
-  liftIO $ putStrLn $ sym ++ show (length stack) ++ " " ++ unwords (map show (head' stack))
-  where head' [] = []
-        head' xs = [head xs]
-
 
 {- Apply -}
 apply :: Env -> FnType -> [LispVal] -> CallstackIO LispVal

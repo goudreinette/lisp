@@ -1,9 +1,6 @@
 module Parse (readOne, readMany) where
 
 import           Control.Applicative.Alternative (asum)
-import           Control.Exception
-import           Control.Monad.Except
-import           Control.Monad.Reader
 import           Text.ParserCombinators.Parsec   hiding (spaces)
 import           Types
 

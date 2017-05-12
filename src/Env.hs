@@ -1,12 +1,9 @@
 module Env where
 
-import           Control.Exception
-import           Control.Lens               ((&), (<&>))
+import           Control.Lens               ((<&>))
 import           Control.Monad.State.Strict
-import           Control.Monad.Trans
 import           Data.IORef
 import           Data.Maybe
-import           Data.Stack
 import           Types
 
 newEnv :: [(String, LispVal)] -> IO Env
