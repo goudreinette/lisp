@@ -65,6 +65,7 @@ wrapPrimitives ismacro purity =
   map wrap
   where wrap (s, f) = (s, Fn $ FnRecord (Named s) ismacro $ Primitive $ purity f)
 
+wrapPrimitive ismacro purity s f = Fn $ FnRecord (Named s) ismacro $ Primitive $ purity f
 
 -- Impure Functions
 read' env [String s] = do
@@ -111,15 +112,15 @@ if_ env [pred, conseq, alt] = do
     Bool False -> alt
     _          -> conseq
 
-
 callCC env [l] = do
   (Fn callback) <- eval env l
   cont <- makeCont
   apply env (fnType callback) [cont]
   where makeCont = do
           stack <- State.get
+          liftIO $ print stack
           contFnBody <- last stack & callFrameToList & walk replaceContForm
-          return $ makeFn False Anonymous [Symbol "x"] [contFnBody] env
+          return $ makeFn False Anonymous [Symbol "x"] [List [wipe'], contFnBody] env
 
         callFrameToList (Callframe fn args) =
           List (fn:args)
@@ -128,6 +129,13 @@ callCC env [l] = do
           return $ case val of
             List [Symbol "call/cc", _] -> Symbol "x"
             _                          -> val
+
+        wipe' =
+          wrapPrimitive False Impure "wipe" f
+
+        f _ [] =  do
+          wipe
+          return Nil
 
 
 

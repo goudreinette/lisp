@@ -17,8 +17,8 @@ push f args =
 pop :: CallstackIO ()
 pop = modify tailSafe
 
-clear :: CallstackIO ()
-clear = put []
+wipe :: CallstackIO ()
+wipe = put []
 
 
 {- Eval -}
