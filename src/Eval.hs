@@ -33,7 +33,7 @@ eval env val =
       where evalUnquotes (List [Symbol "unquote", val]) = eval env val
             evalUnquotes val                            = return val
 
-    List (fsym@(Symbol _) : args) -> do
+    List (fsym : args) -> do
       (Fn f) <- eval env fsym
       push fsym args
       result <- if isMacro f then

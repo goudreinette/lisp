@@ -76,9 +76,9 @@
   (map second (pairs bindings)))
 
 
-(define (let bindings . body)
-  (map first bindings))
-
+(define-syntax (let bindings . body)
+  (list* (list* 'lambda  (binding-vars bindings) body) 
+         (binding-vals bindings)))
 
 (define (do . forms)
   (last forms))
