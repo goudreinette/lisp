@@ -17,6 +17,9 @@ push f args =
 pop :: CallstackIO ()
 pop = modify tailSafe
 
+clear :: CallstackIO ()
+clear = put []
+
 
 {- Eval -}
 eval :: Env -> LispVal -> CallstackIO LispVal
@@ -35,8 +38,14 @@ eval env val =
       push f args
       result <- if isMacro f then
                   apply env (fnType f) args >>= eval env
-                else
-                  evalMany env args >>= apply env (fnType f)
+                else do
+                  evaledArgs <- evalMany env args
+                  stack <- get
+                  if null stack then
+                    return Nil
+                  else do
+                    let (Callframe f _) = head stack
+                    apply env (fnType f) evaledArgs
       pop
       return result
 

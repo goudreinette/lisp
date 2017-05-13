@@ -54,7 +54,8 @@ impurePrimitiveMacros =
      ("define-syntax", define True),
      ("set!", set),
      ("lambda", lambda),
-     ("if", if_)]
+     ("if", if_),
+     ("call/cc", callCC)]
 
 -- Wrap
 wrapPrimitives ismacro purity =
@@ -107,10 +108,14 @@ if_ env [pred, conseq, alt] = do
     Bool False -> eval env alt
     _          -> eval env conseq
 
-callCC env [Fn f] = do
+callCC env [form] = do
+  (Fn f) <- eval env form
   stack <- State.get
-  fnBody <-  last stack & callFrameToList & walk replaceContForm
-  return $ makeFn False Anonymous [Symbol "x"] [fnBody] env
+  contFnBody <-  last stack & callFrameToList & walk replaceContForm
+  let cont = makeFn False Anonymous [Symbol "x"] [contFnBody] env
+  apply env (fnType f) [cont]
+  clear
+  return Nil
   where replaceContForm (List [Symbol "call/cc", _]) = return $ Symbol "x"
         replaceContForm x                            = return x
         callFrameToList (Callframe fn args) = List (Fn fn:args)
