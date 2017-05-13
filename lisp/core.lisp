@@ -60,13 +60,13 @@
 
 (define-syntax (unless test then)
   '(if (= ~test false)
-     '~then
-     'nil))
+     ~then
+     nil))
 
 (define-syntax (when test then)
   '(if ~test
-     '~then
-     'nil))
+     ~then
+     nil))
 
 
 (define (binding-vars bindings)
