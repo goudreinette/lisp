@@ -111,8 +111,11 @@ if_ env [pred, conseq, alt] = do
 callCC env [form] = do
   (Fn f) <- eval env form
   stack <- State.get
+  -- continuation
   contFnBody <-  last stack & callFrameToList & walk replaceContForm
   let cont = makeFn False Anonymous [Symbol "x"] [contFnBody] env
+
+  -- call lambda, clear stack
   apply env (fnType f) [cont]
   clear
   return Nil
