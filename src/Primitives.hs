@@ -116,8 +116,6 @@ callCC env [l] = do
   (Fn callback) <- eval env l
   cont <- makeCont
   apply env (fnType callback) [cont]
-  clear
-  return Nil
   where makeCont = do
           stack <- State.get
           contFnBody <- last stack & callFrameToList & walk replaceContForm
