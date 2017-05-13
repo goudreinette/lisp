@@ -16,8 +16,11 @@ primitives :: [(String, LispVal)]
 primitives = purePrimitives ++ impurePrimitives ++ impurePrimitiveMacros ++ [("readtable", readtable)]
 
 readtable =
-  List [List [Symbol "~", Symbol "unquote"],
-        List [Symbol "'", Symbol "quote"]]
+  toLisp [("~", "unquote"),
+          ("'", "quote"),
+          ("^", "trace")]
+  where toLisp = List . map toPair
+        toPair (s, sym) = List [Symbol s, Symbol sym]
 
 
 purePrimitives =
