@@ -44,7 +44,7 @@ getVars envRef = do
 setVar :: Env -> String -> LispVal -> CallstackIO LispVal
 setVar envRef var value = do
   withVar envRef var (`writeIORef` value)
-  return value
+  return Nil
 
 
 

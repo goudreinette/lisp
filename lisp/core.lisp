@@ -2,6 +2,8 @@
 
 (define nums '(1 2 3 4))
 
+(define readtable (cons '(! readtable) readtable))
+
 (define (inc x)
   (+ 1 x))
 
@@ -93,7 +95,7 @@
 
 (define-syntax (trace form)
   '(let (result ~form)
-      (print "~form => ~result")
+      (print "'~form => ~'result")
       result))
 
 (define (require path)
