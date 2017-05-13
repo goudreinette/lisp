@@ -171,4 +171,4 @@ unpackBool (Bool b) = b
 
 
 stringVal (String s) = s
-stringVal v          = show v
+stringVal v          = showVal v
