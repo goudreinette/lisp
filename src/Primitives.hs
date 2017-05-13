@@ -84,7 +84,7 @@ debug env [] = do
   return Nil
 
 print' _ [form] = do
-  liftIO $ print form
+  liftIO $ putStrLn $ showVal form
   return Nil
 
 -- Impure Macro's
