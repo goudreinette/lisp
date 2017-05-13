@@ -23,9 +23,9 @@ executable lisp
                        parsec,
                        mtl,
                        haskeline-repl,
-                       flow,
                        monadplus,
                        uri,
                        lens,
                        wreq,
-                       tostring
+                       tostring,
+                       safe

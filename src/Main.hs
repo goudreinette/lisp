@@ -6,7 +6,6 @@ import           Primitives
 import           System.Console.Repl
 import           System.Environment
 
-commands = defaultCommands
 
 
 main = do
@@ -21,5 +20,6 @@ main = do
     [] ->
       interactive globalEnv
   where interactive env =
-          replWith "lisp=> " (evalWithInfo env) commands
+          repl "lisp=> " (evalString env)
+
 

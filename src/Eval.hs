@@ -4,6 +4,7 @@ import           Control.Exception
 import           Control.Monad.State.Strict
 import           Env
 import           Parse
+import           Safe
 import           System.Console.Repl
 import           Types
 
@@ -14,12 +15,7 @@ push f args =
           Callframe f args : xs
 
 pop :: CallstackIO ()
-pop =
-  modify popFrame
-  where popFrame (_:xs) =
-          xs
-        popFrame xs =
-          xs
+pop = modify tailSafe
 
 
 {- Eval -}
