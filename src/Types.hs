@@ -117,6 +117,17 @@ instance Eq LispVal where
     False
 
 
+{- Traversal -}
+walk :: (LispVal -> CallstackIO LispVal) -> LispVal -> CallstackIO LispVal
+walk f val = do
+  result <- f val
+  case result of
+    List items ->
+      List <$> traverse (walk f) items
+    _ ->
+      return result
+
+
 {- Show -}
 showVal :: LispVal -> String
 showVal val =

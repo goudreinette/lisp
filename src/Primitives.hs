@@ -1,6 +1,7 @@
 module Primitives where
 
-import           Control.Lens         ((&), (<&>), (^.))
+import           Control.Lens               ((&), (<&>), (^.))
+import qualified Control.Monad.State.Strict as State
 import           Control.Monad.Trans
 import           Data.String.ToString
 import           Env
@@ -10,7 +11,6 @@ import           Parse
 import           System.Console.Repl
 import           Text.URI
 import           Types
-
 
 primitives :: [(String, LispVal)]
 primitives = purePrimitives ++ impurePrimitives ++ impurePrimitiveMacros ++ [("readtable", readtable)]
@@ -52,6 +52,7 @@ impurePrimitiveMacros =
   wrapPrimitives True Impure
     [("define", define False),
      ("define-syntax", define True),
+     ("set!", set),
      ("lambda", lambda),
      ("if", if_)]
 
@@ -93,6 +94,10 @@ define isMacro env args =
     List (Symbol var : params) : body ->
       makeFn isMacro (Named var) params body env & defineVar env var
 
+set env [Symbol var, form] =
+  eval env form >>= setVar env var
+
+
 lambda env (List params : body) =
   return $ makeFn False Anonymous params body env
 
@@ -101,6 +106,15 @@ if_ env [pred, conseq, alt] = do
   case result of
     Bool False -> eval env alt
     _          -> eval env conseq
+
+callCC env [Fn f] = do
+  stack <- State.get
+  fnBody <-  last stack & callFrameToList & walk replaceContForm
+  return $ makeFn False Anonymous [Symbol "x"] [fnBody] env
+  where replaceContForm (List [Symbol "call/cc", _]) = return $ Symbol "x"
+        replaceContForm x                            = return x
+        callFrameToList (Callframe fn args) = List (Fn fn:args)
+
 
 -- IO primitives
 slurp _ [String s] =

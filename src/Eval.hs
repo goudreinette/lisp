@@ -18,16 +18,6 @@ pop :: CallstackIO ()
 pop = modify tailSafe
 
 
-walk :: (LispVal -> CallstackIO LispVal) -> LispVal -> CallstackIO LispVal
-walk f val = do
-  result <- f val
-  case result of
-    List items ->
-      List <$> traverse (walk f) items
-    _ ->
-      return result
-
-
 {- Eval -}
 eval :: Env -> LispVal -> CallstackIO LispVal
 eval env val =
