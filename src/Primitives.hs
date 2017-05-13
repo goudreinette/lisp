@@ -108,20 +108,26 @@ if_ env [pred, conseq, alt] = do
     Bool False -> eval env alt
     _          -> eval env conseq
 
-callCC env [form] = do
-  (Fn f) <- eval env form
-  stack <- State.get
-  -- continuation
-  contFnBody <-  last stack & callFrameToList & walk replaceContForm
-  let cont = makeFn False Anonymous [Symbol "x"] [contFnBody] env
 
-  -- call lambda, clear stack
-  apply env (fnType f) [cont]
+callCC env [l] = do
+  (Fn callback) <- eval env l
+  cont <- makeCont
+  apply env (fnType callback) [cont]
   clear
   return Nil
-  where replaceContForm (List [Symbol "call/cc", _]) = return $ Symbol "x"
-        replaceContForm x                            = return x
-        callFrameToList (Callframe fn args) = List (fn:args)
+  where makeCont = do
+          stack <- State.get
+          contFnBody <- last stack & callFrameToList & walk replaceContForm
+          return $ makeFn False Anonymous [Symbol "x"] [contFnBody] env
+
+        callFrameToList (Callframe fn args) =
+          List (fn:args)
+
+        replaceContForm val =
+          return $ case val of
+            List [Symbol "call/cc", _] -> Symbol "x"
+            _                          -> val
+
 
 
 -- IO primitives

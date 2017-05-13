@@ -30,8 +30,8 @@ eval env val =
 
     List [Symbol "quote", form] ->
       walk evalUnquotes form
-      where evalUnquotes (List [Symbol "unquote", form]) = eval env form
-            evalUnquotes val                             = return val
+      where evalUnquotes (List [Symbol "unquote", val]) = eval env val
+            evalUnquotes val                            = return val
 
     List (fsym : args) -> do
       (Fn f) <- eval env fsym
@@ -43,10 +43,9 @@ eval env val =
                   stack <- get
                   if null stack then
                     return Nil
-                  else do
-                    let (Callframe f _) = head stack
-                    (Fn f) <- eval env f
+                  else
                     apply env (fnType f) evaledArgs
+
       pop
       return result
 

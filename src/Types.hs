@@ -126,6 +126,12 @@ walk f val = do
     _ ->
       return result
 
+replace :: LispVal -> LispVal -> LispVal -> CallstackIO LispVal
+replace from to =
+  walk swap
+  where swap val
+          | val == from = return to
+          | otherwise = return val
 
 {- Show -}
 showVal :: LispVal -> String
