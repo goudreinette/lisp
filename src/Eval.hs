@@ -18,6 +18,16 @@ pop :: CallstackIO ()
 pop = modify tailSafe
 
 
+walk :: (LispVal -> CallstackIO LispVal) -> LispVal -> CallstackIO LispVal
+walk f val = do
+  result <- f val
+  case result of
+    List items ->
+      List <$> traverse (walk f) items
+    _ ->
+      return result
+
+
 {- Eval -}
 eval :: Env -> LispVal -> CallstackIO LispVal
 eval env val =
@@ -26,15 +36,9 @@ eval env val =
       getVar env s
 
     List [Symbol "quote", form] ->
-      evalUnquotes form
-      where evalUnquotes form =
-              case form of
-                List [Symbol "unquote", form] ->
-                  eval env form
-                List items ->
-                  List <$> traverse evalUnquotes items
-                _ ->
-                  return form
+      walk evalUnquotes form
+      where evalUnquotes (List [Symbol "unquote", form]) = eval env form
+            evalUnquotes val                             = return val
 
     List (fsym : args) -> do
       (Fn f) <- eval env fsym
