@@ -121,7 +121,7 @@ callCC env [form] = do
   return Nil
   where replaceContForm (List [Symbol "call/cc", _]) = return $ Symbol "x"
         replaceContForm x                            = return x
-        callFrameToList (Callframe fn args) = List (Fn fn:args)
+        callFrameToList (Callframe fn args) = List (fn:args)
 
 
 -- IO primitives

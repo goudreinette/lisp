@@ -8,7 +8,7 @@ import           Safe
 import           System.Console.Repl
 import           Types
 
-push :: Fn -> Arguments -> CallstackIO ()
+push :: LispVal -> Arguments -> CallstackIO ()
 push f args =
   modify addFrame
   where addFrame xs =
@@ -35,7 +35,7 @@ eval env val =
 
     List (fsym : args) -> do
       (Fn f) <- eval env fsym
-      push f args
+      push fsym args
       result <- if isMacro f then
                   apply env (fnType f) args >>= eval env
                 else do
@@ -45,6 +45,7 @@ eval env val =
                     return Nil
                   else do
                     let (Callframe f _) = head stack
+                    (Fn f) <- eval env f
                     apply env (fnType f) evaledArgs
       pop
       return result

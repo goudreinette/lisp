@@ -8,15 +8,14 @@ import           Text.ParserCombinators.Parsec (ParseError)
 
 
 {- Callstack -}
-data Callframe = Callframe Fn Arguments
+data Callframe = Callframe LispVal Arguments
 type Callstack = [Callframe]
 type CallstackIO a = StateT Callstack IO a
 
 
 instance Show Callframe where
-  show (Callframe FnRecord {name = name} args) =
-    "(" ++ showName name ++ " "
-        ++ showListContents args ++ ")"
+  show (Callframe f args) =
+    showVal $ List (f:args)
 
 
 
@@ -59,7 +58,7 @@ instance Show ErrorType where
 instance Show LispError where
   show (LispError errType stack) =
     show errType ++ "\n"
-    ++ unlines (map show (reverse stack))
+    ++ unlines (map show stack)
 
 
 
