@@ -104,9 +104,9 @@ lambda env (List params : body) =
 
 if_ env [pred, conseq, alt] = do
   result <- eval env pred
-  case result of
-    Bool False -> eval env alt
-    _          -> eval env conseq
+  return $ case result of
+    Bool False -> alt
+    _          -> conseq
 
 
 callCC env [l] = do
@@ -159,8 +159,6 @@ numericBinop op params =
 -- List
 first (List (x:xs):_) =
   x
-
-
 
 rest (List (x:xs):_) =
   List xs

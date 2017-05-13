@@ -1,6 +1,6 @@
 (define a 10)
 
-
+(define nums '(1 2 3 4))
 
 (define (inc x)
   (+ 1 x))
@@ -58,14 +58,14 @@
           (first (reverse items)) 
           (rest (reverse items))))
 
-(define-syntax (unless test then else)
+(define-syntax (unless test then)
   '(if (= ~test false)
-     ~then
-     ~else))
+     '~then
+     'nil))
 
 (define-syntax (when test then)
   '(if ~test
-     ~then
+     '~then
      'nil))
 
 
