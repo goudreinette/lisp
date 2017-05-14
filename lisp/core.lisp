@@ -112,7 +112,6 @@
 
 
 
-
 (define (dbg-test x)
   (debug))
 
@@ -125,11 +124,3 @@
 (define-readermacro "{" "}" pairs*)
 (define-readermacro "[" "]" list)
 (define-prefix "^" trace)
-
-(define (tr)
-  ^(+ 1 
-    (call/cc 
-      (lambda (return)
-        1
-        ^(return 15)
-        3))))
