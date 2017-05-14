@@ -19,8 +19,7 @@ primitives = purePrimitives ++ impurePrimitives ++ impurePrimitiveMacros ++ [("r
 
 readtable =
   toLisp [("~", "unquote"),
-          ("'", "quote"),
-          ("^", "trace")]
+          ("'", "quote")]
   where toLisp = List . map toPair
         toPair (s, sym) = List [String s, Symbol sym]
 

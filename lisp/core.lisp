@@ -111,13 +111,7 @@
 
 
 
-(define (tr)
-  ^(+ 1 
-    (call/cc 
-      (lambda (return)
-        1
-        ^(return 15)
-        3))))
+
 
 (define (dbg-test x)
   (debug))
@@ -125,5 +119,17 @@
 (define-syntax (define-readermacro start end sym)
   '(set! readtable (cons '((~~start ~~end) ~sym) readtable)))
 
+(define-syntax (define-prefix string sym)
+  '(set! readtable (cons '(~~string ~sym) readtable)))
+
 (define-readermacro "{" "}" pairs*)
 (define-readermacro "[" "]" list)
+(define-prefix "^" trace)
+
+(define (tr)
+  ^(+ 1 
+    (call/cc 
+      (lambda (return)
+        1
+        ^(return 15)
+        3))))
