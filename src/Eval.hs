@@ -8,11 +8,11 @@ import           Safe
 import           System.Console.Repl
 import           Types
 
-push :: LispVal -> Arguments -> CallstackIO ()
-push f args =
+push :: LispVal -> CallstackIO ()
+push val =
   modify addFrame
   where addFrame xs =
-          Callframe f args : xs
+          Callframe val : xs
 
 pop :: CallstackIO ()
 pop = modify tailSafe
@@ -35,7 +35,7 @@ eval env val =
 
     List (fsym : args) -> do
       (Fn f) <- eval env fsym
-      push fsym args
+      push val
       result <- if isMacro f then
                   apply env (fnType f) args >>= eval env
                 else do

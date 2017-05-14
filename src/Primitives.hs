@@ -3,6 +3,8 @@ module Primitives where
 import           Control.Lens               ((&), (<&>), (^.))
 import qualified Control.Monad.State.Strict as State
 import           Control.Monad.Trans
+import           Data.List
+import           Data.Maybe                 (fromJust)
 import           Data.String.ToString
 import           Env
 import           Eval
@@ -36,6 +38,7 @@ purePrimitives =
     ("first", first),
     ("rest", rest),
     ("cons", cons),
+    ("list", list),
     ("reverse", reverseList),
     ("string-append", stringAppend)]
 
@@ -65,7 +68,7 @@ wrapPrimitives ismacro purity =
   map wrap
   where wrap (s, f) = (s, Fn $ FnRecord (Named s) ismacro $ Primitive $ purity f)
 
-wrapPrimitive ismacro purity s f = Fn $ FnRecord (Named s) ismacro $ Primitive $ purity f
+wrapPrimitive ismacro purity f = Fn $ FnRecord Anonymous ismacro $ Primitive $ purity f
 
 -- Impure Functions
 read' env [String s] = do
@@ -112,32 +115,36 @@ if_ env [pred, conseq, alt] = do
     Bool False -> alt
     _          -> conseq
 
-callCC env [l] = do
-  (Fn callback) <- eval env l
-  cont <- makeCont
-  apply env (fnType callback) [cont]
-  where makeCont = do
-          stack <- State.get
-          liftIO $ print stack
-          contFnBody <- last stack & callFrameToList & walk replaceContForm
-          return $ makeFn False Anonymous [Symbol "x"] [List [wipe'], contFnBody] env
 
-        callFrameToList (Callframe fn args) =
-          List (fn:args)
+callCC env [l] = do
+  callback <- eval env l
+  cont <- makeCont
+  -- trace cont
+  eval env (List [callback, cont])
+  where makeCont = do
+          contFnBody <- outerFrame >>= walk replaceContForm
+          return $ makeFn False Anonymous [Symbol "x"] [List [Symbol "sc", contFnBody]] env
+
+        extractCallframe (Callframe val) =
+          val
+
+        outerFrame = do
+          stack <- State.get
+          return $ fromJust $ find containsCallCCForm (map extractCallframe (reverse stack))
+          where containsCallCCForm val =
+                  case val of
+                    List [Symbol "call/cc", _] -> True
+                    List xs                    -> any containsCallCCForm xs
+                    _                          -> False
 
         replaceContForm val =
           return $ case val of
             List [Symbol "call/cc", _] -> Symbol "x"
             _                          -> val
 
-        wipe' =
-          wrapPrimitive False Impure "wipe" f
-
-        f _ [] =  do
-          wipe
-          return Nil
-
-
+trace val = do
+  liftIO $ putStrLn $ showVal val
+  return val
 
 -- IO primitives
 slurp _ [String s] =
@@ -166,6 +173,9 @@ numericBinop op params =
 
 
 -- List
+list xs =
+  List xs
+
 first (List (x:xs):_) =
   x
 

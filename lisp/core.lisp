@@ -7,6 +7,9 @@
 (define (inc x)
   (+ 1 x))
 
+(define (id x)
+  x)
+
 
 (define (compose f g)
   (lambda (x) (f (g x))))
@@ -102,12 +105,13 @@
   (map eval (read-many (slurp path))))
 
 
-(define (try-return)
-  (+ 1 
+
+(define (tr)
+  ^(+ 1 
     (call/cc 
       (lambda (return)
         1
-        (print return)
+        ^(return 15)
         3))))
 
 (define (dbg-test x)

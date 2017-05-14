@@ -8,14 +8,14 @@ import           Text.ParserCombinators.Parsec (ParseError)
 
 
 {- Callstack -}
-data Callframe = Callframe LispVal Arguments
+data Callframe = Callframe LispVal
 type Callstack = [Callframe]
 type CallstackIO a = StateT Callstack IO a
 
 
 instance Show Callframe where
-  show (Callframe f args) =
-    showVal $ List (f:args)
+  show (Callframe val) =
+    showVal val
 
 
 
