@@ -4,6 +4,7 @@ import           Control.Lens               ((<&>))
 import           Control.Monad.State.Strict
 import           Data.IORef
 import           Data.Maybe
+import           Parse
 import           Types
 
 newEnv :: [(String, LispVal)] -> IO Env
@@ -11,12 +12,19 @@ newEnv vars = do
   e <- newIORef []
   evalStateT (bindVars e vars) []
 
-getReadtable :: Env -> CallstackIO [(String, String)]
+
+trace val = do
+  liftIO $ putStrLn $ showVal val
+  return val
+
+getReadtable :: Env -> CallstackIO [(ReadtableKey, String)]
 getReadtable env = do
   List pairs <- getVar env "readtable"
   return $ map extractPair pairs
-  where extractPair (List [Symbol s, Symbol sym]) =
-          (s, sym)
+  where extractPair (List [String s, Symbol sym]) =
+          (Prefix s, sym)
+        extractPair (List [List [String start, String end], Symbol sym]) =
+          (Between start end, sym)
 
 isBound :: Env -> String -> CallstackIO Bool
 isBound envRef var =

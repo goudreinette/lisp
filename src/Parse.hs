@@ -1,10 +1,11 @@
-module Parse (readOne, readMany) where
+module Parse (readOne, readMany, ReadtableKey(..)) where
 
 import           Control.Applicative.Alternative (asum)
 import           Text.ParserCombinators.Parsec   hiding (spaces)
 import           Types
 
-type ReadTable = [(String, String)]
+data ReadtableKey = Between String String | Prefix String
+type ReadTable = [(ReadtableKey, String)]
 
 
 
@@ -36,7 +37,11 @@ expr readtable =
         {- Strings -}
         literalString =
           String <$> many1 (noneOf ('\"' : readtableKeys))
-          where readtableKeys = concatMap fst readtable
+          where readtableKeys = concatMap extractPrefix $ filter isPrefix $ map fst readtable
+                isPrefix (Prefix _) = True
+                isPrefix _          = False
+                extractPrefix (Prefix s) = s
+
 
         string' = do
           char '"'
@@ -69,10 +74,16 @@ expr readtable =
 readTableParser :: ReadTable -> Parser LispVal
 readTableParser readtable =
   asum $ map makeParser readtable
-  where makeParser (s, sym) = do
+  where makeParser (Prefix s, sym) = do
           string s
           e <- expr readtable
           return $ List [Symbol sym, e]
+
+        makeParser (Between start end, sym) = do
+          string start
+          contents <- sepBy (expr readtable) spaces
+          string end
+          return $ List (Symbol sym:contents)
 
 
 exprSurroundedByWhitespace readtable = do

@@ -22,7 +22,7 @@ readtable =
           ("'", "quote"),
           ("^", "trace")]
   where toLisp = List . map toPair
-        toPair (s, sym) = List [Symbol s, Symbol sym]
+        toPair (s, sym) = List [String s, Symbol sym]
 
 
 purePrimitives =
@@ -141,10 +141,6 @@ callCC env [l] = do
           return $ case val of
             List [Symbol "call/cc", _] -> Symbol "x"
             _                          -> val
-
-trace val = do
-  liftIO $ putStrLn $ showVal val
-  return val
 
 -- IO primitives
 slurp _ [String s] =

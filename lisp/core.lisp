@@ -2,7 +2,9 @@
 
 (define nums '(1 2 3 4))
 
-(define readtable (cons '(! readtable) readtable))
+
+
+
 
 (define (inc x)
   (+ 1 x))
@@ -42,6 +44,9 @@
       (iter (cons (first-two remainder) acc)
             (rest (rest remainder)))))
   (iter () list))
+
+(define (pairs* . items)
+  (pairs items))
 
 (define (reduce f init seq) 
   (if (empty? seq) 
@@ -116,3 +121,9 @@
 
 (define (dbg-test x)
   (debug))
+
+(define-syntax (define-readermacro start end sym)
+  '(set! readtable (cons '((~~start ~~end) ~sym) readtable)))
+
+(define-readermacro "{" "}" pairs*)
+(define-readermacro "[" "]" list)
