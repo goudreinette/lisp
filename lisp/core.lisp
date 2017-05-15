@@ -25,9 +25,6 @@
 (define (last list)
   (first (reverse list)))
 
-(define (list . args)
-  args)
-
 (define (pair a b)
  '(~a ~b))
 
@@ -114,13 +111,3 @@
 
 (define (dbg-test x)
   (debug))
-
-(define-syntax (define-readermacro start end sym)
-  '(set! readtable (cons '((~~start ~~end) ~sym) readtable)))
-
-(define-syntax (define-prefix string sym)
-  '(set! readtable (cons '(~~string ~sym) readtable)))
-
-(define-readermacro "{" "}" pairs*)
-(define-readermacro "[" "]" list)
-(define-prefix "^" trace)

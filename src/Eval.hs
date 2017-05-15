@@ -58,8 +58,11 @@ eval env val =
       return val
 
 
-evalMany env xs =
-  iter xs $ return []
+evalMany env xs = do
+  push $ Symbol "list"
+  r <- iter xs $ return []
+  pop
+  return r
   where iter :: [LispVal] -> CallstackIO [LispVal] -> CallstackIO [LispVal]
         iter [] rs = rs
         iter (x:xs) rs = do

@@ -175,7 +175,7 @@ numericBinop op params =
 
 -- List
 list xs =
-  List xs
+  List (reverse xs)
 
 first (List (x:xs):_) =
   x
