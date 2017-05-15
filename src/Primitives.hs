@@ -51,7 +51,8 @@ impurePrimitives =
     ("debug", debug),
     ("print", print'),
     ("slurp", slurp),
-    ("spit", spit)]
+    ("spit", spit),
+    ("sc", shortCircuit)]
 
 impurePrimitiveMacros =
   wrapPrimitives True Impure
@@ -114,6 +115,11 @@ if_ env [pred, conseq, alt] = do
     Bool False -> alt
     _          -> conseq
 
+shortCircuit env [val] = do
+  wipe
+  push val
+  push val
+  return val
 
 callCC env [l] = do
   callback <- eval env l

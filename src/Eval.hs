@@ -44,7 +44,13 @@ eval env val =
                   if null stack then
                     return Nil
                   else
-                    apply env (fnType f) evaledArgs
+                    case head stack of
+                      (Callframe (List (fsym:args))) -> do
+                        (Fn f) <- eval env fsym
+                        apply env (fnType f) evaledArgs
+
+                      (Callframe val) ->
+                        return val
       pop
       return result
 
@@ -52,7 +58,19 @@ eval env val =
       return val
 
 
-evalMany env = traverse (eval env)
+evalMany env xs =
+  iter xs $ return []
+  where iter :: [LispVal] -> CallstackIO [LispVal] -> CallstackIO [LispVal]
+        iter [] rs = rs
+        iter (x:xs) rs = do
+          r <- eval env x
+          stack <- get
+          if null stack then
+            rs
+          else do
+            rs' <- rs
+            iter xs $ return $ r:rs'
+
 evalBody env body = last <$> evalMany env body
 
 
