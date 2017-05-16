@@ -8,8 +8,17 @@ published._
 
 <!-- more -->
 
-```
+```scheme
 (+ 1 (+ 2 (+ 3 (+ (call/cc (lambda (here) 
                              (here 20) 4))
                   5))))
+```
+
+
+
+```scheme
+(define (return-test)
+  (call/cc 
+    (lambda (return)
+      1 (return 2) 3)))
 ```

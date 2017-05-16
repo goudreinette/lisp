@@ -107,13 +107,11 @@
   (map eval (read-many (slurp path))))
 
 
-(define (rt)
+(define (return-test)
   (call/cc 
     (lambda (return)
-      1
-      (set! a return)
-      (return 2)
-      3)))
+      1 (return 2) 3)))
+
 
 (define (dbg-test x)
   (debug))
