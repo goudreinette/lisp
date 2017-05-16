@@ -2,13 +2,16 @@ module Types where
 
 import           Control.Exception
 import           Control.Monad.State.Strict
+import           Control.Monad.Trans.Either
 import           Data.IORef
 import           Data.Typeable
 import           Text.ParserCombinators.Parsec (ParseError)
 
+{- Monad Stack -}
+newtype LispM a = LispM { unLispM :: EitherT LispVal (CallstackIO a) }
 
 {- Callstack -}
-data Callframe = Callframe LispVal
+newtype Callframe = Callframe LispVal
 type Callstack = [Callframe]
 type CallstackIO a = StateT Callstack IO a
 

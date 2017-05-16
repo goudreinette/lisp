@@ -28,4 +28,7 @@ executable lisp
                        lens,
                        wreq,
                        tostring,
-                       safe
+                       safe,
+                       either,
+                       uri,
+                       haskeline-repl
