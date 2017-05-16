@@ -115,3 +115,6 @@
 
 (define (dbg-test x)
   (debug))
+
+(define-syntax (let/cc sym . body)
+  '(call/cc ~(list* 'lambda '(~sym) body)))

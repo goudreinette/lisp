@@ -1,7 +1,6 @@
 module Eval where
 
 import           Control.Exception
-import           Control.Lens               ((<&>))
 import           Control.Monad.State.Strict
 import           Data.Either.Combinators
 import           Env
