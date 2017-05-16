@@ -2,37 +2,34 @@ module Eval where
 
 import           Control.Exception
 import           Control.Monad.State.Strict
+import           Data.Either.Combinators
 import           Env
 import           Parse
 import           Safe
 import           System.Console.Repl
 import           Types
 
-push :: LispVal -> CallstackIO ()
+push :: LispVal -> LispM ()
 push val = do
   modify addFrame
   printStack "->"
   where addFrame xs =
           Callframe val : xs
 
-pop :: CallstackIO ()
+pop :: LispM ()
 pop = do
   modify tailSafe
   printStack "<-"
 
-wipe :: CallstackIO ()
-wipe = do
-  put []
-  printStack "wiped"
 
-printStack :: String -> CallstackIO ()
+printStack :: String -> LispM ()
 printStack msg = do
   stack <- get
   liftIO $ putStrLn $ msg ++ " " ++ unwords (map show stack)
 
 
 {- Eval -}
-eval :: Env -> LispVal -> CallstackIO LispVal
+eval :: Env -> LispVal -> LispM LispVal
 eval env val =
   case val of
     Symbol s ->
@@ -63,33 +60,34 @@ evalBody env body = last <$> evalMany env body
 
 evalString, evalFile :: Env -> String -> IO ()
 evalString =
-  evalWithCatch action
+  runWithCatch action
   where action env string = do
           readtable <- getReadtable env
           readOne readtable string >>= eval env >>= liftIO . putStrLn . showVal
 
-evalWithInfo =
-  evalWithCatch action
-  where action env string = do
-          readtable <- getReadtable env
-          result <- readOne readtable string >>= eval env
-          liftIO $ putStrLn $ showVal result ++ " : " ++ show result
+-- evalWithInfo =
+--   runWithCatch action
+--   where action env string = do
+--           readtable <- getReadtable env
+--           result <- readOne readtable string >>= eval env
+--           liftIO $ putStrLn $ showVal result ++ " : " ++ show result
 
 evalFile =
-  evalWithCatch action
+  runWithCatch action
   where action env file = do
           readtable <- getReadtable env
           liftIO (readFile file) >>= readMany readtable >>= evalMany env
           return ()
 
-
-evalWithCatch f env x = do
-  let action = evalStateT (f env x) []
+runWithCatch :: (Env -> String -> LispM ()) -> Env -> String -> IO ()
+runWithCatch f env x = do
+  let action = fromRight' <$> run (f env x)
   catch action (printError :: LispError -> IO ())
 
 
+
 {- Apply -}
-apply :: Env -> FnType -> [LispVal] -> CallstackIO LispVal
+apply :: Env -> FnType -> [LispVal] -> LispM LispVal
 apply env Primitive { purity = p } args =
   case p of
     Pure func ->

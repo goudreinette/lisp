@@ -7,13 +7,28 @@ import           Data.IORef
 import           Data.Typeable
 import           Text.ParserCombinators.Parsec (ParseError)
 
-{- Monad Stack -}
-newtype LispM a = LispM { unLispM :: EitherT LispVal (CallstackIO a) }
+{- Monad Stack
+   Either for short-circuiting continuations
+   CallstackIO for stacktraces
+-}
+newtype LispM a = LispM
+  { unLispM :: EitherT LispVal (StateT Callstack IO) a }
+  deriving (Monad, Functor, Applicative, MonadIO, MonadState Callstack)
+
+
+run :: LispM a -> IO (Either LispVal a)
+run m =
+  evalStateT (runEitherT (unLispM m)) []
+
+
+{- Short circuit evaluation order, abandoning current stack -}
+shortCircuit :: LispVal -> LispM ()
+shortCircuit =  LispM . left
+
 
 {- Callstack -}
 newtype Callframe = Callframe LispVal
 type Callstack = [Callframe]
-type CallstackIO a = StateT Callstack IO a
 
 
 instance Show Callframe where
@@ -21,13 +36,12 @@ instance Show Callframe where
     showVal val
 
 
-
 {- Env -}
 type Env = IORef [(String, IORef LispVal)]
 
 
 {- Error -}
-throwWithStack :: ErrorType -> CallstackIO a
+throwWithStack :: ErrorType -> LispM a
 throwWithStack e = do
   stack <- get
   liftIO $ throw $ LispError e stack
@@ -73,7 +87,7 @@ data FnName = Anonymous
             deriving (Show)
 
 data Purity = Pure ([LispVal] -> LispVal)
-            | Impure (Env -> [LispVal] -> CallstackIO LispVal)
+            | Impure (Env -> [LispVal] -> LispM LispVal)
 
 data FnType
   = Primitive { purity :: Purity }
@@ -120,7 +134,7 @@ instance Eq LispVal where
 
 
 {- Traversal -}
-walk :: (LispVal -> CallstackIO LispVal) -> LispVal -> CallstackIO LispVal
+walk :: (LispVal -> LispM LispVal) -> LispVal -> LispM LispVal
 walk f val = do
   result <- f val
   case result of
@@ -129,7 +143,7 @@ walk f val = do
     _ ->
       return result
 
-replace :: LispVal -> LispVal -> LispVal -> CallstackIO LispVal
+replace :: LispVal -> LispVal -> LispVal -> LispM LispVal
 replace from to =
   walk swap
   where swap val

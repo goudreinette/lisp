@@ -51,8 +51,7 @@ impurePrimitives =
     ("debug", debug),
     ("print", print'),
     ("slurp", slurp),
-    ("spit", spit),
-    ("sc", shortCircuit)]
+    ("spit", spit)]
 
 impurePrimitiveMacros =
   wrapPrimitives True Impure
@@ -115,13 +114,6 @@ if_ env [pred, conseq, alt] = do
     Bool False -> alt
     _          -> conseq
 
-shortCircuit env [val] = do
-  l <- State.get <&> length
-  let i =  replicate l (Callframe val)
-  liftIO $ print i
-  wipe
-  State.put i
-  return val
 
 callCC env [l] = do
   callback <- eval env l
@@ -130,7 +122,7 @@ callCC env [l] = do
   eval env (List [callback, cont])
   where makeCont = do
           contFnBody <- outerFrame >>= walk replaceContForm
-          return $ makeFn False Anonymous [Symbol "x"] [List [Symbol "sc", contFnBody]] env
+          return $ makeFn False Anonymous [Symbol "x"] [contFnBody] env
 
         extractCallframe (Callframe val) =
           val

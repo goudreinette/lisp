@@ -2,22 +2,27 @@ module Env where
 
 import           Control.Lens               ((<&>))
 import           Control.Monad.State.Strict
+import           Data.Either.Combinators
 import           Data.IORef
 import           Data.Maybe
 import           Parse
 import           Types
 
+-- run :: LispM a -> IO a
+
+
+
 newEnv :: [(String, LispVal)] -> IO Env
 newEnv vars = do
   e <- newIORef []
-  evalStateT (bindVars e vars) []
+  fromRight' <$> run (bindVars e vars)
 
 
 trace val = do
   liftIO $ putStrLn $ showVal val
   return val
 
-getReadtable :: Env -> CallstackIO [(ReadtableKey, String)]
+getReadtable :: Env -> LispM [(ReadtableKey, String)]
 getReadtable env = do
   List pairs <- getVar env "readtable"
   return $ map extractPair pairs
@@ -26,22 +31,22 @@ getReadtable env = do
         extractPair (List [List [String start, String end], Symbol sym]) =
           (Between start end, sym)
 
-isBound :: Env -> String -> CallstackIO Bool
+isBound :: Env -> String -> LispM Bool
 isBound envRef var =
   liftIO $ readIORef envRef <&> lookup var <&> isJust
 
-withVar :: Env -> String -> (IORef LispVal -> IO a) -> CallstackIO a
+withVar :: Env -> String -> (IORef LispVal -> IO a) -> LispM a
 withVar envRef var f = do
   env <-  liftIO $ readIORef envRef
   case lookup var env of
     Just val -> liftIO $ f val
     _        -> throwWithStack $ UnboundVar var
 
-getVar :: Env -> String -> CallstackIO LispVal
+getVar :: Env -> String -> LispM LispVal
 getVar envRef var =
   withVar envRef var readIORef
 
-getVars :: Env -> CallstackIO [(String, LispVal)]
+getVars :: Env -> LispM [(String, LispVal)]
 getVars envRef = do
   env <- liftIO $ readIORef envRef
   let vars = map fst env
@@ -49,14 +54,14 @@ getVars envRef = do
   return $ zip vars vals
 
 
-setVar :: Env -> String -> LispVal -> CallstackIO LispVal
+setVar :: Env -> String -> LispVal -> LispM LispVal
 setVar envRef var value = do
   withVar envRef var (`writeIORef` value)
   return Nil
 
 
 
-defineVar :: Env -> String -> LispVal -> CallstackIO LispVal
+defineVar :: Env -> String -> LispVal -> LispM LispVal
 defineVar envRef var value = do
   alreadyDefined <-  isBound envRef var
   if alreadyDefined
@@ -69,7 +74,7 @@ defineVar envRef var value = do
       liftIO $ writeIORef envRef ((var, valueRef) : env)
       return $ Symbol var
 
-bindVars :: Env -> [(String, LispVal)] -> CallstackIO Env
+bindVars :: Env -> [(String, LispVal)] -> LispM Env
 bindVars envRef bindings = liftIO $ readIORef envRef >>= extendEnv >>= newIORef
      where extendEnv env = traverse addBinding bindings <&> (++ env)
            addBinding (var, value) = do ref <- newIORef value
