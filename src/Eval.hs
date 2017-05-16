@@ -9,16 +9,26 @@ import           System.Console.Repl
 import           Types
 
 push :: LispVal -> CallstackIO ()
-push val =
+push val = do
   modify addFrame
+  printStack "->"
   where addFrame xs =
           Callframe val : xs
 
 pop :: CallstackIO ()
-pop = modify tailSafe
+pop = do
+  modify tailSafe
+  printStack "<-"
 
 wipe :: CallstackIO ()
-wipe = put []
+wipe = do
+  put []
+  printStack "wiped"
+
+printStack :: String -> CallstackIO ()
+printStack msg = do
+  stack <- get
+  liftIO $ putStrLn $ msg ++ " " ++ unwords (map show stack)
 
 
 {- Eval -}
@@ -36,44 +46,18 @@ eval env val =
     List (fsym : args) -> do
       (Fn f) <- eval env fsym
       push val
-      result <- if isMacro f then
-                  apply env (fnType f) args >>= eval env
-                else do
-                  evaledArgs <- evalMany env args
-                  stack <- get
-                  if null stack then
-                    return Nil
-                  else
-                    case head stack of
-                      (Callframe (List (fsym:args))) -> do
-                        (Fn f) <- eval env fsym
-                        apply env (fnType f) evaledArgs
-
-                      (Callframe val) ->
-                        return val
+      r <- if isMacro f then
+             apply env (fnType f) args >>= eval env
+           else
+             evalMany env args >>= apply env (fnType f)
       pop
-      return result
+      return r
 
     _ ->
       return val
 
 
-evalMany env xs = do
-  push $ Symbol "list"
-  r <- iter xs $ return []
-  pop
-  return r
-  where iter :: [LispVal] -> CallstackIO [LispVal] -> CallstackIO [LispVal]
-        iter [] rs = rs
-        iter (x:xs) rs = do
-          r <- eval env x
-          stack <- get
-          if null stack then
-            rs
-          else do
-            rs' <- rs
-            iter xs $ return $ r:rs'
-
+evalMany env = traverse (eval env)
 evalBody env body = last <$> evalMany env body
 
 

@@ -116,9 +116,11 @@ if_ env [pred, conseq, alt] = do
     _          -> conseq
 
 shortCircuit env [val] = do
+  l <- State.get <&> length
+  let i =  replicate l (Callframe val)
+  liftIO $ print i
   wipe
-  push val
-  push val
+  State.put i
   return val
 
 callCC env [l] = do
