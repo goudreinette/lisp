@@ -26,7 +26,9 @@ pop = do
 printStack :: String -> LispM ()
 printStack msg = do
   stack <- get
-  liftIO $ putStrLn $ msg ++ " " ++ unwords (map show stack)
+  liftIO $ putStrLn $ msg ++ " " ++ unwords (map show (headSafe stack))
+  where headSafe []     = []
+        headSafe (x:xs) = [x]
 
 
 {- Eval -}

@@ -151,7 +151,7 @@ replace from to =
           | otherwise = return val
 
 {- Show -}
-printVal = print . showVal
+printVal = putStrLn . showVal
 
 showVal :: LispVal -> String
 showVal val =
