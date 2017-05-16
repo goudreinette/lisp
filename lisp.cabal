@@ -31,4 +31,5 @@ executable lisp
                        safe,
                        either,
                        uri,
-                       haskeline-repl
+                       haskeline-repl,
+                       flow

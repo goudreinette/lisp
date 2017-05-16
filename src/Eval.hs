@@ -67,8 +67,7 @@ evalString =
   where action env string = do
           readtable <- getReadtable env
           let r = readOne readtable string >>= eval env
-          r' <- liftIO (run r)
-          liftIO $ either printVal printVal r'
+          liftIO $ run r >>= either printVal printVal
 
 
 -- evalWithInfo =
@@ -85,6 +84,7 @@ evalFile =
           readtable <- getReadtable env
           liftIO (readFile file) >>= readMany readtable >>= evalMany env
           return ()
+
 
 runWithCatch :: (Env -> String -> LispM ()) -> Env -> String -> IO ()
 runWithCatch f env x = do

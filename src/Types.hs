@@ -7,6 +7,7 @@ import           Data.IORef
 import           Data.Typeable
 import           Text.ParserCombinators.Parsec (ParseError)
 
+
 {- Monad Stack
    Either for short-circuiting continuations
    CallstackIO for stacktraces
@@ -101,6 +102,7 @@ data Fn = FnRecord { name    :: FnName,
                      isMacro :: Bool,
                      fnType  :: FnType }
           deriving (Show)
+
 
 
 data LispVal = Symbol String

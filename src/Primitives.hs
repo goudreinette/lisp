@@ -8,6 +8,7 @@ import           Data.Maybe                 (fromJust)
 import           Data.String.ToString
 import           Env
 import           Eval
+import           Flow
 import           Network.Wreq
 import           Parse
 import           System.Console.Repl
@@ -114,38 +115,49 @@ if_ env [pred, conseq, alt] = do
     Bool False -> alt
     _          -> conseq
 
-shortCircuit' = wrapPrimitive False Impure f
-  where f env [val] = do
+shortCircuit' = wrapPrimitive False Impure sc
+  where sc env [val] = do
           r <- eval env val
           shortCircuit r
           return r
 
-
 callCC env [l] = do
   callback <- eval env l
   cont <- makeCont
-  -- trace cont
-  eval env (List [callback, cont])
+  eval env $ List [callback, cont]
   where makeCont = do
-          contFnBody <- outerFrame >>= walk replaceContForm
-          return $ makeFn False Anonymous [Symbol "x"] [List [shortCircuit', contFnBody]] env
+          contFnBody <- topFrame >>= walk replaceContForm
+          return $ makeFn False Anonymous
+                     [Symbol "x"]
+                     [List [shortCircuit', contFnBody]]
+                     env
 
         extractCallframe (Callframe val) =
           val
 
-        outerFrame = do
-          stack <- State.get
-          return $ fromJust $ find containsCallCCForm (map extractCallframe (reverse stack))
-          where containsCallCCForm val =
-                  case val of
-                    List [Symbol "call/cc", _] -> True
-                    List xs                    -> any containsCallCCForm xs
-                    _                          -> False
+        topFrame =
+          State.get
+          <&> reverse
+          <&> map extractCallframe
+          <&> find containsCallCCForm
+          <&> fromJust
+
+        containsCallCCForm val =
+          case val of
+            List [Symbol "call/cc", _] ->
+              True
+            List xs                    ->
+              any containsCallCCForm xs
+            _                          ->
+              False
 
         replaceContForm val =
           return $ case val of
-            List [Symbol "call/cc", _] -> Symbol "x"
-            _                          -> val
+            List [Symbol "call/cc", _] ->
+              Symbol "x"
+            _                          ->
+              val
+
 
 -- IO primitives
 slurp _ [String s] =

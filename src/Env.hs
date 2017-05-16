@@ -11,7 +11,6 @@ import           Types
 -- run :: LispM a -> IO a
 
 
-
 newEnv :: [(String, LispVal)] -> IO Env
 newEnv vars = do
   e <- newIORef []
