@@ -151,6 +151,8 @@ replace from to =
           | otherwise = return val
 
 {- Show -}
+printVal = print . showVal
+
 showVal :: LispVal -> String
 showVal val =
   case val of

@@ -1,6 +1,7 @@
 module Eval where
 
 import           Control.Exception
+import           Control.Lens               ((<&>))
 import           Control.Monad.State.Strict
 import           Data.Either.Combinators
 import           Env
@@ -63,7 +64,10 @@ evalString =
   runWithCatch action
   where action env string = do
           readtable <- getReadtable env
-          readOne readtable string >>= eval env >>= liftIO . putStrLn . showVal
+          let r = readOne readtable string >>= eval env
+          r' <- liftIO (run r)
+          liftIO $ either printVal printVal r'
+
 
 -- evalWithInfo =
 --   runWithCatch action
@@ -71,6 +75,7 @@ evalString =
 --           readtable <- getReadtable env
 --           result <- readOne readtable string >>= eval env
 --           liftIO $ putStrLn $ showVal result ++ " : " ++ show result
+
 
 evalFile =
   runWithCatch action
