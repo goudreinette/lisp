@@ -114,6 +114,12 @@ if_ env [pred, conseq, alt] = do
     Bool False -> alt
     _          -> conseq
 
+shortCircuit' = wrapPrimitive False Impure f
+  where f env [val] = do
+          r <- eval env val
+          shortCircuit r
+          return r
+
 
 callCC env [l] = do
   callback <- eval env l
@@ -122,7 +128,7 @@ callCC env [l] = do
   eval env (List [callback, cont])
   where makeCont = do
           contFnBody <- outerFrame >>= walk replaceContForm
-          return $ makeFn False Anonymous [Symbol "x"] [contFnBody] env
+          return $ makeFn False Anonymous [Symbol "x"] [List [shortCircuit', contFnBody]] env
 
         extractCallframe (Callframe val) =
           val
