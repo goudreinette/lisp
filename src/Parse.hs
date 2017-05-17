@@ -10,7 +10,6 @@ type ReadTable = [(ReadtableKey, String)]
 
 
 
-
 {- Whitespace -}
 spaces = skipMany1 space
 
@@ -93,7 +92,7 @@ exprSurroundedByWhitespace readtable = do
   return e
 
 readOne :: ReadTable -> String -> LispM LispVal
-readOne readtable = parseSyntaxError (exprSurroundedByWhitespace readtable)
+readOne readtable = parseSyntaxError (option Nil (exprSurroundedByWhitespace readtable))
 
 readMany :: ReadTable -> String -> LispM [LispVal]
 readMany readtable = parseSyntaxError (many (exprSurroundedByWhitespace readtable))
