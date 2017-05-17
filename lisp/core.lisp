@@ -117,4 +117,10 @@
   (debug))
 
 (define-syntax (let/cc sym . body)
-  '(call/cc ~(list* 'lambda '(~sym) body)))
+  (list 'call/cc (list* 'lambda '(~sym) body)))
+
+(define-syntax (define-readermacro start end sym)
+  '(set! readtable (cons '((~~start ~~end) ~sym) readtable)))
+
+(define-readermacro "[" "]" list)
+(define-readermacro "{" "}" pairs)

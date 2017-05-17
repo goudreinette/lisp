@@ -92,7 +92,7 @@ exprSurroundedByWhitespace readtable = do
   return e
 
 readOne :: ReadTable -> String -> LispM LispVal
-readOne readtable = parseSyntaxError (option Nil (exprSurroundedByWhitespace readtable))
+readOne readtable = parseSyntaxError (exprSurroundedByWhitespace readtable)
 
 readMany :: ReadTable -> String -> LispM [LispVal]
 readMany readtable = parseSyntaxError (many (exprSurroundedByWhitespace readtable))
