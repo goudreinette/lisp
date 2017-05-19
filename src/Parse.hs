@@ -1,13 +1,15 @@
 module Parse (readOne, readMany, ReadtableKey(..)) where
 
 import           Control.Applicative.Alternative (asum)
-import           Text.ParserCombinators.Parsec   hiding (spaces)
+import           Control.Monad.Reader
+import           Text.Parsec                     (ParsecT, runParserT)
+import           Text.ParserCombinators.Parsec   hiding (Parser, spaces)
 import           Types
 
 data ReadtableKey = Between String String | Prefix String
 type ReadTable = [(ReadtableKey, String)]
 
-
+type Parser a = ParsecT String () (Reader ReadTable) a
 
 
 {- Whitespace -}
@@ -85,20 +87,22 @@ readTableParser readtable =
           return $ List (Symbol sym:contents)
 
 
-exprSurroundedByWhitespace readtable = do
+exprSurroundedByWhitespace = do
+  readtable <- ask
   skipMany space
-  e <- expr  readtable
+  e <- expr readtable
   skipMany space
   return e
 
 readOne :: ReadTable -> String -> LispM LispVal
-readOne readtable = parseSyntaxError (exprSurroundedByWhitespace readtable)
+readOne = parseSyntaxError exprSurroundedByWhitespace
 
 readMany :: ReadTable -> String -> LispM [LispVal]
-readMany readtable = parseSyntaxError (many (exprSurroundedByWhitespace readtable))
+readMany = parseSyntaxError $ many exprSurroundedByWhitespace
 
-parseSyntaxError :: Parser a -> String -> LispM a
-parseSyntaxError parser code =
-  either (throwWithStack . SyntaxError)
-         return
-         (parse parser "lisp" code)
+parseSyntaxError :: Parser a -> ReadTable -> String -> LispM a
+parseSyntaxError p readtable code =
+  case runReader (runParserT p () "lisp" code) readtable of
+    Left e  -> throwWithStack $ SyntaxError e
+    Right v -> return v
+
