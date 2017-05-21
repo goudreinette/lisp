@@ -1,56 +1,47 @@
 module Eval where
 
 import           Control.Exception
-import           Control.Monad.State.Strict
-import           Data.Either.Combinators
 import           Env
 import           Parse
-import           Safe
 import           System.Console.Repl
 import           Types
 
-push :: LispVal -> LispM ()
-push val = do
-  modify addFrame
-  printStack "->"
-  where addFrame xs =
-          Callframe val : xs
-
-pop :: LispM ()
-pop = do
-  modify tailSafe
-  printStack "<-"
-
-
-printStack :: String -> LispM ()
-printStack msg = do
-  stack <- get
-  liftIO $ putStrLn $ msg ++ " " ++ unwords (map show (headSafe stack))
-  where headSafe []     = []
-        headSafe (x:xs) = [x]
-
 
 {- Eval -}
-eval :: Env -> LispVal -> LispM LispVal
+eval :: Env -> LispVal -> IO LispVal
 eval env val =
   case val of
     Symbol s ->
       getVar env s
 
     List [Symbol "quote", form] ->
-      walk evalUnquotes form
-      where evalUnquotes (List [Symbol "unquote", val]) = eval env val
-            evalUnquotes val                            = return val
+      evalUnquotes form
+      where evalUnquotes val =
+              case val of
+                List [Symbol "unquote", val] ->
+                  eval env val
+                List xs ->
+                  List <$> traverse evalUnquotes xs
+                _ ->
+                  return val
+
+    List (Symbol "define" : args) ->
+      case args of
+        [Symbol var, form] ->
+          eval env form >>= defineVar env var
+        List (Symbol var : params) : body ->
+          defineVar env var $ makeFn params body env
+
+    List (Symbol "lambda" : List params : body) ->
+      return $ makeFn params body env
+
+    List (Symbol "if" : test : conseq : alt : _) -> do
+      r <- eval env test
+      eval env (if r /= Bool False then conseq else alt)
 
     List (fsym : args) -> do
       (Fn f) <- eval env fsym
-      push val
-      r <- if isMacro f then
-             apply env (fnType f) args >>= eval env
-           else
-             evalMany env args >>= apply env (fnType f)
-      pop
-      return r
+      apply env f args >>= eval env
 
     _ ->
       return val
@@ -60,40 +51,20 @@ evalMany env = traverse (eval env)
 evalBody env body = last <$> evalMany env body
 
 
-evalString, evalFile :: Env -> String -> IO ()
-evalString =
-  runWithCatch action
-  where action env string = do
-          readtable <- getReadtable env
-          let r = readOne readtable string >>= eval env
-          liftIO $ run r >>= either printVal printVal
+evalString :: Env -> String -> IO ()
+evalString env string =
+  withCatch (readOne string >>= eval env >>= printVal)
 
+evalFile :: Env -> String -> IO ()
+evalFile env file =
+  withCatch (readFile file >>= readMany >>= evalMany env >> return ())
 
--- evalWithInfo =
---   runWithCatch action
---   where action env string = do
---           readtable <- getReadtable env
---           result <- readOne readtable string >>= eval env
---           liftIO $ putStrLn $ showVal result ++ " : " ++ show result
-
-
-evalFile =
-  runWithCatch action
-  where action env file = do
-          readtable <- getReadtable env
-          liftIO (readFile file) >>= readMany readtable >>= evalMany env
-          return ()
-
-
-runWithCatch :: (Env -> String -> LispM ()) -> Env -> String -> IO ()
-runWithCatch f env x = do
-  let action = fromRight' <$> run (f env x)
-  catch action (printError :: LispError -> IO ())
-
+withCatch x =
+  catch x (printError :: LispError -> IO ())
 
 
 {- Apply -}
-apply :: Env -> FnType -> [LispVal] -> LispM LispVal
+apply :: Env -> FnType -> [LispVal] -> IO LispVal
 apply env Primitive { purity = p } args =
   case p of
     Pure func ->
@@ -103,7 +74,7 @@ apply env Primitive { purity = p } args =
 
 apply env (Lisp params varargs body closure) args =
   if length params /= length args && not varargs then
-    throwWithStack $ NumArgs (length params) (length args)
+    throw $ NumArgs (length params) (length args)
   else do
     envWithArgs <- bindVars closure $ zipParamsArgs params varargs args
     evalBody envWithArgs body
@@ -121,9 +92,9 @@ zipParamsArgs params varargs args =
 
 
 {- Fn -}
-makeFn :: Bool -> FnName -> [LispVal] -> [LispVal] -> Env -> LispVal
-makeFn isMacro name params body env =
-  Fn $ FnRecord name isMacro $ Lisp stringParams varargs body env
+makeFn :: [LispVal] -> [LispVal] -> Env -> LispVal
+makeFn params body env =
+  Fn $ Lisp stringParams varargs body env
   where stringParams = filter (/= ".") $ map extractString params
         extractString (Symbol s) = s
         varargs = case drop (length params - 2) params of

@@ -9,17 +9,15 @@ import           System.Environment
 
 
 main = do
-  globalEnv <- newEnv primitives
+  env <- newEnv primitives
   args <- getArgs
   case args of
     [file, "-i"] -> do
-      evalFile globalEnv file
-      interactive globalEnv
+      evalFile env file
+      interactive env
     [file] ->
-      evalFile globalEnv file
+      evalFile env file
     [] ->
-      interactive globalEnv
+      interactive env
   where interactive env =
           repl "lisp=> " (evalString env)
-
-

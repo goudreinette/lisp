@@ -1,40 +1,10 @@
 module Types where
 
 import           Control.Exception
-import           Control.Monad.State.Strict
-import           Control.Monad.Trans.Either
 import           Data.IORef
 import           Data.Typeable
 import           Text.ParserCombinators.Parsec (ParseError)
 
-
-{- Monad Stack
-   Either for short-circuiting continuations
-   CallstackIO for stacktraces
--}
-newtype LispM a = LispM
-  { unLispM :: EitherT LispVal (StateT Callstack IO) a }
-  deriving (Monad, Functor, Applicative, MonadIO, MonadState Callstack)
-
-
-run :: LispM a -> IO (Either LispVal a)
-run m =
-  evalStateT (runEitherT (unLispM m)) []
-
-
-{- Short circuit evaluation order, abandoning current stack -}
-shortCircuit :: LispVal -> LispM ()
-shortCircuit =  LispM . left
-
-
-{- Callstack -}
-newtype Callframe = Callframe LispVal
-type Callstack = [Callframe]
-
-
-instance Show Callframe where
-  show (Callframe val) =
-    showVal val
 
 
 {- Env -}
@@ -42,53 +12,32 @@ type Env = IORef [(String, IORef LispVal)]
 
 
 {- Error -}
-throwWithStack :: ErrorType -> LispM a
-throwWithStack e = do
-  stack <- get
-  liftIO $ throw $ LispError e stack
+instance Exception LispError
 
-type Expected = LispVal
-type Got = LispVal
-
-
-
-data LispError = LispError ErrorType Callstack
-  deriving (Typeable)
-
-data ErrorType = UnboundVar String
+data LispError = UnboundVar String
                | SyntaxError ParseError
                | NumArgs Int Int
-               | TypeMismatch Expected Got
+               | TypeMismatch LispVal LispVal
                | Default String
                deriving (Typeable)
 
 
-instance Exception LispError
-
-instance Show ErrorType where
+instance Show LispError where
   show (UnboundVar var) =
-    "Unbound Var: " ++ var
+    "Unbound var: " ++ var
   show (SyntaxError parseError) =
-    "Syntax Error: " ++ show parseError
+    "Syntax error: " ++ show parseError
   show (NumArgs expected vals) =
     "Wrong number of arguments: expected " ++ show expected ++ ", got " ++ show vals
 
-instance Show LispError where
-  show (LispError errType stack) =
-    show errType ++ "\n"
-    ++ unlines (map show stack)
 
 
 
 {- Val -}
 type Arguments = [LispVal]
 
-data FnName = Anonymous
-            | Named String
-            deriving (Show)
-
 data Purity = Pure ([LispVal] -> LispVal)
-            | Impure (Env -> [LispVal] -> LispM LispVal)
+            | Impure (Env -> [LispVal] -> IO LispVal)
 
 data FnType
   = Primitive { purity :: Purity }
@@ -98,20 +47,13 @@ data FnType
            closure :: Env }
 
 
-data Fn = FnRecord { name    :: FnName,
-                     isMacro :: Bool,
-                     fnType  :: FnType }
-          deriving (Show)
-
-
-
 data LispVal = Symbol String
              | List [LispVal]
              | Number Integer
              | String String
              | Bool Bool
              | Nil
-             | Fn Fn
+             | Fn FnType
              deriving (Show)
 
 -- TODO: unpack
@@ -135,22 +77,6 @@ instance Eq LispVal where
     False
 
 
-{- Traversal -}
-walk :: (LispVal -> LispM LispVal) -> LispVal -> LispM LispVal
-walk f val = do
-  result <- f val
-  case result of
-    List items ->
-      List <$> traverse (walk f) items
-    _ ->
-      return result
-
-replace :: LispVal -> LispVal -> LispVal -> LispM LispVal
-replace from to =
-  walk swap
-  where swap val
-          | val == from = return to
-          | otherwise = return val
 
 {- Show -}
 printVal = putStrLn . showVal
@@ -168,11 +94,11 @@ showVal val =
   Fn f       -> showFn f
 
 
-showFn :: Fn -> String
-showFn FnRecord { fnType = fnType, isMacro = isMacro } =
-  case fnType of
+showFn :: FnType -> String
+showFn f =
+  case f of
     Primitive {} ->
-      "<primitive " ++ (if isMacro then "macro" else "function") ++ ">"
+      "<primitive>"
     Lisp {params = params, varargs = varargs, body = body} ->
        "(lambda " ++ showParams params varargs ++ " " ++ showListContents body  ++ ")"
 
@@ -188,9 +114,3 @@ showParams params varargs
 
   | otherwise =
     "(" ++ unwords params ++ ")"
-
-showName name =
-  case name of
-    Named s   -> s
-    Anonymous -> "<anonymous>"
-

@@ -16,17 +16,11 @@ import           Text.URI
 import           Types
 
 primitives :: [(String, LispVal)]
-primitives = purePrimitives ++ impurePrimitives ++ impurePrimitiveMacros ++ [("readtable", readtable)]
-
-readtable =
-  toLisp [("~", "unquote"),
-          ("'", "quote")]
-  where toLisp = List . map toPair
-        toPair (s, sym) = List [String s, Symbol sym]
+primitives = purePrimitives ++ impurePrimitives
 
 
 purePrimitives =
-  wrapPrimitives False Pure
+  wrapPrimitives Pure
    [("+", numericBinop (+)),
     ("-", numericBinop (-)),
     ("*", numericBinop (*)),
@@ -35,131 +29,32 @@ purePrimitives =
     ("=", equals),
     ("and", boolBinop (&&)),
     ("or", boolBinop (||)),
-    ("first", first),
-    ("rest", rest),
+    ("car", first),
+    ("cdr", rest),
     ("cons", cons),
     ("list", list),
     ("reverse", reverseList),
     ("string-append", stringAppend)]
 
 impurePrimitives =
-  wrapPrimitives False Impure
-   [("read", read'),
-    ("read-many", readMany'),
-    ("eval", eval'),
-    ("unquote", eval'),
-    ("env", env'),
-    ("debug", debug),
-    ("print", print'),
+  wrapPrimitives Impure
+   [("print", print'),
     ("slurp", slurp),
     ("spit", spit)]
 
-impurePrimitiveMacros =
-  wrapPrimitives True Impure
-    [("define", define False),
-     ("define-syntax", define True),
-     ("set!", set),
-     ("lambda", lambda),
-     ("if", if_),
-     ("call/cc", callCC)]
 
--- Wrap
-wrapPrimitives ismacro purity =
+{- Wrap -}
+wrapPrimitives purity =
   map wrap
-  where wrap (s, f) = (s, Fn $ FnRecord (Named s) ismacro $ Primitive $ purity f)
+  where wrap (s, f) = (s, Fn $ Primitive $ purity f)
 
-wrapPrimitive ismacro purity f = Fn $ FnRecord Anonymous ismacro $ Primitive $ purity f
 
--- Impure Functions
-read' env [String s] = do
-  readtable <- getReadtable env
-  readOne readtable s
 
-readMany' env [String s] = do
-  readtable <- getReadtable env
-  List <$> readMany readtable s
-
-eval' env (x:_) =
-  eval env x
-
-env' env [] =
-  fmap (List . map toPair) (getVars env)
-  where toPair (var, val) = List [Symbol var, val]
-
-debug env [] = do
-  liftIO $ repl "debug=> " $ evalString env
-  return Nil
-
+{- Impure Functions -}
 print' _ [form] = do
   liftIO $ putStrLn $ showVal form
   return Nil
 
--- Impure Macro's
-define isMacro env args =
-  case args of
-    [Symbol var, form] ->
-      eval env form >>= defineVar env var
-    List (Symbol var : params) : body ->
-      makeFn isMacro (Named var) params body env & defineVar env var
-
-set env [Symbol var, form] =
-  eval env form >>= setVar env var
-
-
-lambda env (List params : body) =
-  return $ makeFn False Anonymous params body env
-
-if_ env [pred, conseq, alt] = do
-  result <- eval env pred
-  return $ case result of
-    Bool False -> alt
-    _          -> conseq
-
-shortCircuit' = wrapPrimitive False Impure sc
-  where sc env [val] = do
-          r <- eval env val
-          shortCircuit r
-          return r
-
-callCC env [l] = do
-  callback <- eval env l
-  cont <- makeCont
-  eval env $ List [callback, cont]
-  where makeCont = do
-          contFnBody <- topFrame >>= walk replaceContForm
-          return $ makeFn False Anonymous
-                     [Symbol "x"]
-                     [List [shortCircuit', contFnBody]]
-                     env
-
-        extractCallframe (Callframe val) =
-          val
-
-        topFrame =
-          State.get
-          <&> reverse
-          <&> map extractCallframe
-          <&> find containsCallCCForm
-          <&> fromJust
-
-        containsCallCCForm val =
-          case val of
-            List [Symbol "call/cc", _] ->
-              True
-            List xs                    ->
-              any containsCallCCForm xs
-            _                          ->
-              False
-
-        replaceContForm val =
-          return $ case val of
-            List [Symbol "call/cc", _] ->
-              Symbol "x"
-            _                          ->
-              val
-
-
--- IO primitives
 slurp _ [String s] =
   String <$> liftIO result
   where result =
@@ -171,6 +66,7 @@ slurp _ [String s] =
 spit _ [String f, String s] = do
   liftIO $ writeFile f s
   return Nil
+
 
 
 -- Boolean
@@ -219,7 +115,6 @@ stringAppend =
 -- boolBoolBinop op params = Val.Bool $ foldl1 op $ map unpackBool params
 
 -- Unpack
-
 unpackNum :: LispVal -> Integer
 unpackNum (Number n) = n
 
