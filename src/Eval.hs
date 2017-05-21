@@ -41,7 +41,7 @@ eval env val =
 
     List (fsym : args) -> do
       (Fn f) <- eval env fsym
-      apply env f args >>= eval env
+      evalMany env args >>= apply env f
 
     _ ->
       return val

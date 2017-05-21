@@ -54,7 +54,7 @@ data LispVal = Symbol String
              | Bool Bool
              | Nil
              | Fn FnType
-             deriving (Show)
+             deriving (Eq, Show)
 
 -- TODO: unpack
 
@@ -62,19 +62,8 @@ instance Show FnType where
   show Primitive{} = "Primitive {..}"
   show Lisp{}      = "Lisp {..}"
 
-instance Eq LispVal where
-  Symbol a == Symbol b =
-    a == b
-  Number a == Number b =
-    a == b
-  List a == List b =
-    a == b
-  Bool a == Bool b =
-    a == b
-  Nil == Nil =
-    True
-  _ == _ =
-    False
+instance Eq FnType where
+  _ == _ = False
 
 
 
